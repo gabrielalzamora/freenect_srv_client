@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     init();
     setServerIp();
     putKcombo();
+    barreInit();
 }
 
 MainWindow::~MainWindow()
@@ -69,6 +70,31 @@ void MainWindow::depthDataReady()
  */
 void MainWindow::barreDataReady()
 {
+    int x,y;
+    for(int i=0;i<360;i++){
+        if(barrerBuf[i] == 0) continue;//no data info no plot
+        y = 235-(235*barrerBuf[i]/4000);//divide by max distance to mesure
+        x = 320*(360-i)/360;
+//        qDebug("  x = %d   y = %d , barre = %d",x,y, barrerBuf[i]);
+        sceneBarre->addEllipse(x,y,1,1);
+    }
+    ui->gvBarre->show();
+}
+
+/**
+ * @brief MainWindow::barreInit
+ * draw axes on sceneBarre to show on gvBarre
+ */
+void MainWindow::barreInit()
+{
+    ui->gvBarre->setBackgroundBrush(QColor(200,240,240,255));//light blue
+    sceneBarre->setBackgroundBrush(QColor(200,240,240,255));
+    QPen ejesPen = QPen(QColor(0,0,0,255));//black
+    ejesPen.setWidth(2);
+    QLine ejex = QLine(5,230,315,230);
+    QLine ejey = QLine(160,230,160,5);
+    sceneBarre->addLine(ejex,ejesPen);
+    sceneBarre->addLine(ejey,ejesPen);
 
 }
 /**
@@ -90,6 +116,7 @@ void MainWindow::init()
     imgVideo = NULL;
     imgDepth = NULL;
     imgBarre = NULL;
+    pixItem = NULL;
     ui->gvVideo->setScene(sceneVideo);
     ui->gvDepth->setScene(sceneDepth);
     ui->gvBarre->setScene(sceneBarre);
@@ -130,8 +157,7 @@ void MainWindow::putKcombo()
             QString str;
             ui->combo->addItem(str.setNum(i));
         }
-        sceneBarre->addText(" Select kinect in combo box to start\n1-click combo\n2-click device number in combo\n3-click Go");
-        ui->gvBarre->show();
+        ui->textEdit->setText(" Select kinect in combo box to start\n1-click combo\n2-click device number in combo\n3-click Go");
     }
 }
 /**
@@ -166,27 +192,30 @@ void MainWindow::stopK(int indexK)
 void MainWindow::loop()
 {
     flag = 1;
-    int count(0);//number of points in bufferCloud
-    int countLimit(0);//stop while(flag) if no points DEBUG
+//    int count(0);//number of points in bufferCloud
+//    int countLimit(0);//stop while(flag) if no points DEBUG
 
     while( flag ){
+        qApp->processEvents();//stay responsive to button click
+
         device->getRGB(videoBuf);
         videoDataReady();//paint video on gvVideo
         device->getDepth(depthBuf);
         depthDataReady();//paint depth on gvDepth
 
-        device->get3d(p3Buf);
+        device->getAll(p3Buf,barrerBuf);
+/*
         if(p3Buf.size()<0){
             countLimit++;
             qDebug() << "  no data in buffers " << countLimit;
             if(countLimit>50) flag = 0;
             continue;//no data in bufferCloud try next loop
         }
-
+*/
         device->getBarrer(barrerBuf);
         barreDataReady();//paint Barrido (barre)
 
-        ui->glWidget->setpCloud(p3Buf,count);
+        ui->glWidget->setpCloud(p3Buf,p3Buf.size());
         ui->glWidget->repaint();//paint points cloud on glwidget
 
         qApp->processEvents();//stay responsive to button click

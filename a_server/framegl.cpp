@@ -15,11 +15,20 @@ FrameGL::FrameGL(QWidget *parent) : QOpenGLWidget(parent)
 FrameGL::~FrameGL()
 {
 }
+/**
+ * @brief FrameGL::minimumSizeHint
+ * QT auxiliari function to keep item size when resizing
+ * @return QSize minimum size to shrink item
+ */
 QSize FrameGL::minimumSizeHint() const
 {
     return QSize(320,240);
 }
-
+/**
+ * @brief FrameGL::sizeHint
+ * QT auxiliari function to keep item size when resizing
+ * @return QSize  ideal size to show item
+ */
 QSize FrameGL::sizeHint() const
 {
     return QSize(320,240);
@@ -43,7 +52,11 @@ void FrameGL::setClearColor(const QColor &color)
     clearColor = color;
     update();
 }
-
+/**
+ * @brief FrameGL::setpCloud
+ * @param c
+ * @param count
+ */
 void FrameGL::setpCloud(std::vector<point3c> c, int count)
 {
     sizeCloud = count;
@@ -85,7 +98,7 @@ void FrameGL::paintGL()
     // Define una transformacion de vision.Punto de vista XYZ, centro de la
     // escena donde se mira XYZ y vector de direccion ascendente
     //gluLookAt(ptoVista[0],ptoVista[1],ptoVista[2],0.0,0.0,5000.0,0.0,-1.0,0.0);
-    gluLookAt(-7*anglex, -7*angley,-1000.0, 0.0, 0.0, 2000.0, 0.0, -1.0, 0.0);
+    gluLookAt(-7*anglex, -7*angley,-2000.0, 0.0, 0.0, 2000.0, 0.0, -1.0, 0.0);
     glScalef(zoom, zoom, 1);
 
     //glRotatef(m_x,1.0f, 0.0f, 0.0f); // Rotacion X
@@ -97,13 +110,20 @@ void FrameGL::paintGL()
 
     glPopMatrix();
 }
-
+/**
+ * @brief FrameGL::resizeGL
+ * @param width
+ * @param height
+ */
 void FrameGL::resizeGL(int width, int height)
 {
     int side = qMin(width, height);
     glViewport((width - side) / 2, (height - side) / 2, side, side);
 }
-
+/**
+ * @brief FrameGL::mousePressEvent
+ * @param event
+ */
 void FrameGL::mousePressEvent(QMouseEvent *event)
 {
     lastPosition = event->pos();

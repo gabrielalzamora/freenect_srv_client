@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <QGraphicsScene>
+#include <QGraphicsItem>
 #include <QTcpServer>
 #include <QMainWindow>
 #include "apikinect.h"
@@ -29,6 +30,7 @@ public slots:
     void videoDataReady();
     void depthDataReady();
     void barreDataReady();
+    void barreInit();
     //void p3dDataReady(std::vector<point3c>);//mira como se hace FRAME.h
     //void setSrvKinect(SrvKinect sK);
     //void setLed(int led_Status);
@@ -57,6 +59,8 @@ private:
     QImage *imgVideo;
     QImage *imgDepth;
     QImage *imgBarre;
+    QGraphicsPixmapItem *pixItem;
+    QPainter *ptpt;
 
     Datos *datos;///< object that contain all configuration data from tab: datos
 

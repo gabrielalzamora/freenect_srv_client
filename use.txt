@@ -1,0 +1,19 @@
+# apikinect
+server connected to kinect will send 3d data to clients
+
+
+Start
+1-Connect a kinect (or compatible device/not tested)
+2-Open project a_server on QT ide
+3-Click on run (with a_server as active project)
+4-If no kinect detected restart
+5-Click on conbo where detected kinects are numbered
+6-Click again to select kinect index (Go button should be activated)
+7-Click Go
+
+Stop
+1-Click on conbo where detected kinects are numbered
+2-Click again to select working kinect index (Stop button should be activated)
+
+Exit
+1-You may start another or quit clicking on exit cross (upper left corner)

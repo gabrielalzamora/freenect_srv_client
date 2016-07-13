@@ -75,6 +75,40 @@ bool Apikinect::getDepth(std::vector<uint16_t> &buffer)
     return true;
 }
 
+void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &bufferB)
+{
+    point2 p2;
+    point3c p3;
+    RGBQ color;
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
+    //------------------------------------------------------time pre buffers
+    for (int i = 0; i < 480*640; ++i)
+    {
+        // Convert from image plane coordinates to world coordinates
+        if( (p3.z = m_buffer_depth[i]) != 0  ){                  // Z = d
+            p3.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;      // X = (x - cx) * d / fx
+            p3.y = (i/640 - (480-1)/2.f) * m_buffer_depth[i] / f;// Y = (y - cy) * d / fy
+            color.rgbRed = m_buffer_video[3*i+0];    // R
+            color.rgbGreen = m_buffer_video[3*i+1];  // G
+            color.rgbBlue = m_buffer_video[3*i+2];   // B
+            color.rgbReserved = 0;
+            p3.color = color;
+            ///estás usando dos buffers, a ver si con uno te basta; pero recuerda pintar pantalla
+            /// persistencia de la memoria, etc...
+            buffer3.push_back(p3);//MainWindow::p3Buf
+            m_buffer_3.push_back(p3);//Apikinect::m_buffer_3
+
+//time pre barrer
+            int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
+            uint32_t length = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
+            if( m_buffer_B[index] > length )
+                bufferB[index]=length;
+                m_buffer_B[index] = length;
+//time post barrer  difference*numpoints = time barrer
+        }
+    }//----------------------------------------------------------time post buffers
+}
+
 /**
  * @brief Apikinect::get3d 3 dimention + color points in buffer
  * plus 2D and Barrer buffers filled with last data available
@@ -104,21 +138,10 @@ int Apikinect::get3d(std::vector<point3c> &buffer)
             /// persistencia de la memoria, etc...
             buffer.push_back(p3);//MainWindow::p3Buf
             m_buffer_3.push_back(p3);//Apikinect::m_buffer_3
-
-            p2.x = p3.x;//two dimentions point cloud
-            p2.z = p3.z;
-            m_buffer_2.push_back(p2);
-//time pre barrer
-            int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
-            uint32_t length = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
-            if( m_buffer_B[index] > length )
-                m_buffer_B[index] = length;
-//time post barrer  difference*numpoints = time barrer
         }
     }
 //time post buffers
-    int i = buffer.size();
-    return i;//buffer.size();
+    return buffer.size();
 }
 
 int Apikinect::get2(std::vector<point2> &buffer)
@@ -127,7 +150,8 @@ int Apikinect::get2(std::vector<point2> &buffer)
     return buffer.size();
 }
 
-void Apikinect::getBarrer(std::vector<uint32_t> &buffer)
+int Apikinect::getBarrer(std::vector<uint32_t> &buffer)
 {
     buffer.swap(m_buffer_B);
+    return buffer.size();
 }
