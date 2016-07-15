@@ -48,6 +48,7 @@ private slots:
     void on_combo_activated(const QString &arg1);
 
     void attendNewClient();
+
 protected:
     void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
@@ -62,7 +63,7 @@ private:
     QGraphicsPixmapItem *pixItem;
     QPainter *ptpt;
 
-    Datos *datos;///< object that contain all configuration data from tab: datos
+    Data *data;///< object that contain all configuration data from tab: data
 
     freenect_context *context;///< point to usb context asociated to kinect data handling
     Freenect::Freenect freenect;///< Freenect class object to start events thread and Devices

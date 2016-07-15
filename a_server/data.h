@@ -2,6 +2,12 @@
 #define DATOS_H
 
 #include <QWidget>
+#include <QGroupBox>
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QSlider>
+#include <QLabel>
+#include <QLayout>
 
 typedef struct tagRGBQ{
     uint8_t rgbRed;
@@ -46,20 +52,23 @@ typedef struct SrvKinect{
     uint8_t m_bCompressColor;
 }srvKinect;
 
-class Datos : public QWidget
+class Data : public QWidget
 {
     Q_OBJECT
 public:
-    explicit Datos(QWidget *parent = 0);
+    explicit Data(QWidget *parent = 0);
 
 signals:
-    void srvKchanged(srvKinect newSrvK);
+    void dataChanged();
+    void srvKChanged(srvKinect newSrvK);
 
 public slots:
-    //void setSrvK(srvK newSrvK);
-    //srvK getSrvK();
+//        void setSrvK(srvK newSrvK);
+//        srvK getSrvK();
+    void setTabWidgets();
 
 private:
+    SrvKinect m_srvK;
     double m_fAngulo;
     int8_t m_iAnguloKinect;
     double m_fAltura;
@@ -81,6 +90,7 @@ private:
     uint32_t m_ulRefrescoColor;
     uint8_t m_bEnvioColor;
     uint8_t m_bCompressColor;
+//  tab_2 data
 
 };
 

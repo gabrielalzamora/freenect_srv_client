@@ -289,5 +289,3 @@ void MainWindow::closeEvent(QCloseEvent *event)
     this->~MainWindow();
     exit(0);
 }
-
-
