@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QGroupBox>
+#include <QRadioButton>
 #include <QCheckBox>
 #include <QLineEdit>
 #include <QSlider>
@@ -63,21 +64,14 @@ signals:
     void srvKChanged(srvKinect newSrvK);
 
 public slots:
-//        void setSrvK(srvK newSrvK);
-//        srvK getSrvK();
-    void setTabWidgets();
+    void setData();
+    void setSrvK(SrvKinect newSrvK);
+    SrvKinect getSrvK();
 
 private:
-    SrvKinect m_srvK;
-    double m_fAngulo;
-    int8_t m_iAnguloKinect;
-    double m_fAltura;
-    double m_fYMin;
-    double m_fYMax;
-    double m_fZMax;
-    uint32_t m_ulRefresco3D;
-    uint8_t m_usModulo3D;
-    uint8_t m_bEnvio3D;
+    SrvKinect *m_srvK;
+    int ledOption;
+/*
     uint8_t m_bEnvio2D;
     uint8_t m_bEnvioBarrido;
     uint8_t m_bCompress3D;
@@ -90,7 +84,29 @@ private:
     uint32_t m_ulRefrescoColor;
     uint8_t m_bEnvioColor;
     uint8_t m_bCompressColor;
+*/
 //  tab_2 data
+    QLineEdit *LimitsLineEAngulo;
+    QLineEdit *LimitsLineEAngK;
+    QLineEdit *LimitsLineEAltura;
+    QLineEdit *LimitsLineEYmin;
+    QLineEdit *LimitsLineEYmax;
+    QLineEdit *LimitsLineEZmax;
+    QSlider *PointsSlider;
+    QSlider *PointsSliderM;
+    QCheckBox *PointsCBenvio3D;
+    QCheckBox *PointsCBenvio2;
+    QCheckBox *PointsCBenvioB;
+    QCheckBox *PointsCBcomprimido;
+    QLineEdit *PointsLineEEcu;
+    QLineEdit *PointsLineEYmin;
+    QLineEdit *PointsLineEYmax;
+    QSlider *DepthSlider;
+    QCheckBox *DepthCBenvio;
+    QCheckBox *DepthCBcomprimido;
+    QSlider *VideoSlider;
+    QCheckBox *VideoCBenvio;
+    QCheckBox *VideoCBcomprimido;
 
 };
 

@@ -50,7 +50,7 @@ private slots:
     void attendNewClient();
 
 protected:
-    void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
+//    void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
 private:
     Ui::MainWindow *ui;

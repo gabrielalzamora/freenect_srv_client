@@ -279,13 +279,13 @@ void MainWindow::attendNewClient()
 {
 
 }
-/**
+/* Al parecer pasa por ~MainWindow al cerrar ¿por qué se queja a veces?
  * @brief MainWindow::closeEvent
  * override window close event to stop loop and delete apikinect handler
  * @param event
- */
+ *//*
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     this->~MainWindow();
     exit(0);
-}
+}*/
