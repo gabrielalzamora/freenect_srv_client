@@ -26,8 +26,8 @@ public:
 private:
     std::mutex m_rgb_mutex;///< mutex to ensure video frame data save access
     std::mutex m_depth_mutex;///< mutex to ensure video frame data save access
-    std::mutex m_3D_mutex;///< mutex to protect 3D data read/write operations
-    std::mutex m_barre_mutex;///< mutex to ensure save barre read/write operations
+    std::mutex m_mutex_3D;///< mutex to protect 3D data read/write operations
+    std::mutex m_mutex_barre;///< mutex to ensure save barre read/write operations
     std::vector<uint8_t> m_buffer_video;///< buffer to store usb incoming video frame (see VideoCallback)
     std::vector<uint16_t> m_buffer_depth;///< buffer to store usb incoming depth frame (see DepthCallback)
     bool m_new_rgb_frame;///< flag true if we have new frame data in m_buffer_video, otherwise false

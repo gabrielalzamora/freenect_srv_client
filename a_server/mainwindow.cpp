@@ -71,16 +71,26 @@ void MainWindow::depthDataReady()
 void MainWindow::barreDataReady()
 {
     int x,y;
-    for(int i=0;i<360;i++){
-        if(barrerBuf[i] == 0) continue;//no data info no plot
-        y = 235-(235*barrerBuf[i]/4000);//divide by max distance to mesure
-        x = 320*(360-i)/360;
-//        qDebug("  x = %d   y = %d , barre = %d",x,y, barrerBuf[i]);
-        sceneBarre->addEllipse(x,y,1,1);
+    int aux(0);
+    if( ellipseVector.size() != 0 ){
+        for(int i=0;i<ellipseVector.size();i++){
+            sceneBarre->removeItem(ellipseVector[i]);
+            delete ellipseVector[i];
+        }
+        ellipseVector.resize(0);
     }
+    for(int i=0;i<360;i++){
+        if(barreBuf[i] == 0) continue;//no data info no plot
+        y = 235-(235*barreBuf[i]/4000);//divide barreBuf[i] by max mesured distance to fit in screen
+        x = 320*(360-i)/360;
+//        qDebug("  x = %d   y = %d , barre = %d",x,y, barreBuf[i]);
+        ellipseVector.push_back(new QGraphicsEllipseItem(x,y,1.0,1.0));
+        sceneBarre->addItem(ellipseVector[aux]);
+        aux++;
+    }
+//    qDebug("  x = %d   y = %d , barre = %d",x,y, barreBuf[180]);
     ui->gvBarre->show();
 }
-
 /**
  * @brief MainWindow::barreInit
  * draw axes on sceneBarre to show on gvBarre
@@ -108,15 +118,17 @@ void MainWindow::init()
     flag = false;
     videoBuf.resize(640*480*3);
     depthBuf.resize(640*480);
-    p3Buf.resize(300000);//max number of points
-    barrerBuf.resize(360);
+    p3Buf.reserve(300000);//max number of points
+    p3Buf.resize(0);//initially we have none
+    barreBuf.resize(360);
+    ellipseVector.reserve(360);
+    ellipseVector.resize(0);
     sceneVideo = new QGraphicsScene;
     sceneDepth = new QGraphicsScene;
     sceneBarre = new QGraphicsScene;
     imgVideo = NULL;
     imgDepth = NULL;
     imgBarre = NULL;
-    pixItem = NULL;
     ui->gvVideo->setScene(sceneVideo);
     ui->gvDepth->setScene(sceneDepth);
     ui->gvBarre->setScene(sceneBarre);
@@ -196,27 +208,16 @@ void MainWindow::loop()
 //    int countLimit(0);//stop while(flag) if no points DEBUG
 
     while( flag ){
-        qApp->processEvents();//stay responsive to button click
 
         device->getRGB(videoBuf);
         videoDataReady();//paint video on gvVideo
         device->getDepth(depthBuf);
         depthDataReady();//paint depth on gvDepth
 
-        device->getAll(p3Buf,barrerBuf);
-/*
-        if(p3Buf.size()<0){
-            countLimit++;
-            qDebug() << "  no data in buffers " << countLimit;
-            if(countLimit>50) flag = 0;
-            continue;//no data in bufferCloud try next loop
-        }
-*/
-        device->getBarrer(barrerBuf);
-        barreDataReady();//paint Barrido (barre)
-
-        ui->glWidget->setpCloud(p3Buf,p3Buf.size());
+        device->getAll(p3Buf,barreBuf);
+        ui->glWidget->setpCloud(p3Buf,p3Buf.size());///---DEBUG remove p3Buf.size()
         ui->glWidget->repaint();//paint points cloud on glwidget
+        barreDataReady();//paint Barrido (barre)
 
         qApp->processEvents();//stay responsive to button click
     }

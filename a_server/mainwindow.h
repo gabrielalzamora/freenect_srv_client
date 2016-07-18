@@ -60,10 +60,12 @@ private:
     QImage *imgVideo;
     QImage *imgDepth;
     QImage *imgBarre;
-    QGraphicsPixmapItem *pixItem;
+    QGraphicsEllipseItem *ellipse;
+    std::vector<QGraphicsEllipseItem*> ellipseVector;
     QPainter *ptpt;
 
     Data *data;///< object that contain all configuration data from tab: data
+    srvKinect srvK ;///< struct holding datos sended by last client to reset datos
 
     freenect_context *context;///< point to usb context asociated to kinect data handling
     Freenect::Freenect freenect;///< Freenect class object to start events thread and Devices
@@ -73,7 +75,7 @@ private:
     std::vector<uint16_t> depthBuf;///< container of depth info from kinect
     std::vector<point3c> p3Buf;///< container of points cloud <- video+depth
     std::vector<point2> p2Buf;///< container of 2D points = (point cloud) - color - z
-    std::vector<uint32_t> barrerBuf;///< barrerBuf contains distance on angle (360-i)/2 degrees, xOz plane
+    std::vector<uint32_t> barreBuf;///< barreBuf contains distance on angle (360-i)/2 degrees, xOz plane
     int flag;///< 0 stop loop(), otherwise let loop() run
     int numDevices;///< number of detected kinects
     int currentDeviceIndex;///< index of active kinect
@@ -83,12 +85,9 @@ private:
     std::mutex mutexDepth;
     std::mutex mutex3;
     std::mutex mutex2;
-    std::mutex mutexBarrer;
+    std::mutex mutexBarre;
     std::mutex mutexAccel;
 
-
-
-    srvKinect srvK ;///< struct holding datos sended by last client to reset datos
     QTcpServer *mainServer;
     std::vector<AttendClient> attnClients;///< active AttendClient (to access them)
 

@@ -1,4 +1,3 @@
-
 #include <math.h>       // sqrt(), atan()
 #include "apikinect.h"
 
@@ -80,6 +79,8 @@ void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &buf
     point2 p2;
     point3c p3;
     RGBQ color;
+    buffer3.resize(1);
+    for(int i=0;i<360;i++) bufferB[i]=0;
     float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
     //------------------------------------------------------time pre buffers
     for (int i = 0; i < 480*640; ++i)
@@ -93,17 +94,12 @@ void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &buf
             color.rgbBlue = m_buffer_video[3*i+2];   // B
             color.rgbReserved = 0;
             p3.color = color;
-            ///estás usando dos buffers, a ver si con uno te basta; pero recuerda pintar pantalla
-            /// persistencia de la memoria, etc...
             buffer3.push_back(p3);//MainWindow::p3Buf
-            m_buffer_3.push_back(p3);//Apikinect::m_buffer_3
-
 //time pre barrer
             int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
             uint32_t length = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
-            if( m_buffer_B[index] > length )
+            if( bufferB[index]==0 || bufferB[index]>length)
                 bufferB[index]=length;
-                m_buffer_B[index] = length;
 //time post barrer  difference*numpoints = time barrer
         }
     }//----------------------------------------------------------time post buffers
@@ -117,12 +113,10 @@ void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &buf
  */
 int Apikinect::get3d(std::vector<point3c> &buffer)
 {
-    point2 p2;
     point3c p3;
     RGBQ color;
     float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
 //time pre buffers
-
     for (int i = 0; i < 480*640; ++i)
     {
         // Convert from image plane coordinates to world coordinates
@@ -134,10 +128,7 @@ int Apikinect::get3d(std::vector<point3c> &buffer)
             color.rgbBlue = m_buffer_video[3*i+2];   // B
             color.rgbReserved = 0;
             p3.color = color;
-            ///estás usando dos buffers, a ver si con uno te basta; pero recuerda pintar pantalla
-            /// persistencia de la memoria, etc...
             buffer.push_back(p3);//MainWindow::p3Buf
-            m_buffer_3.push_back(p3);//Apikinect::m_buffer_3
         }
     }
 //time post buffers
@@ -152,6 +143,19 @@ int Apikinect::get2(std::vector<point2> &buffer)
 
 int Apikinect::getBarrer(std::vector<uint32_t> &buffer)
 {
-    buffer.swap(m_buffer_B);
+    point3c p3;
+    for(int i=0;i<360;i++) buffer[i]=0;
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
+    //------------------------------------------------------time pre buffers
+    for (int i = 0; i < 480*640; ++i)
+    {
+        if( (p3.z = m_buffer_depth[i]) != 0  ){                  // Z = d
+            p3.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;      // X = (x - cx) * d / fx
+            int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
+            uint32_t length = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
+            if( buffer[index]==0 || buffer[index]>length)
+                buffer[index]=length;
+        }
+    }//----------------------------------------------------------time post buffers
     return buffer.size();
 }
