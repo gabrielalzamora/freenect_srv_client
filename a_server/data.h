@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QGroupBox>
 #include <QRadioButton>
+#include <QButtonGroup>
 #include <QCheckBox>
 #include <QLineEdit>
 #include <QSlider>
@@ -58,33 +59,23 @@ class Data : public QWidget
     Q_OBJECT
 public:
     explicit Data(QWidget *parent = 0);
+    SrvKinect *m_srvK;
+    int ledOption;
 
 signals:
     void dataChanged();
     void srvKChanged(srvKinect newSrvK);
 
 public slots:
+    void setLedOption(int option);
+    int getLedOption();
     void setData();
     void setSrvK(SrvKinect newSrvK);
     SrvKinect getSrvK();
 
 private:
-    SrvKinect *m_srvK;
-    int ledOption;
-/*
-    uint8_t m_bEnvio2D;
-    uint8_t m_bEnvioBarrido;
-    uint8_t m_bCompress3D;
-    int32_t m_iBarridoEcu;
-    int32_t m_iBarridoYMin;
-    int32_t m_iBarridoYMax;
-    uint32_t m_ulRefrescoDepth;
-    uint8_t m_bEnvioDepth;
-    uint8_t m_bCompressDepth;
-    uint32_t m_ulRefrescoColor;
-    uint8_t m_bEnvioColor;
-    uint8_t m_bCompressColor;
-*/
+//    SrvKinect *m_srvK;
+//    int ledOption;
 //  tab_2 data
     QLineEdit *LimitsLineEAngulo;
     QLineEdit *LimitsLineEAngK;
@@ -107,7 +98,7 @@ private:
     QSlider *VideoSlider;
     QCheckBox *VideoCBenvio;
     QCheckBox *VideoCBcomprimido;
-
+    QButtonGroup *ledGroup;
 };
 
 #endif // DATOS_H

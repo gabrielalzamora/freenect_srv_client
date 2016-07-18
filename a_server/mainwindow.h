@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QTime>
 #include <mutex>
 #include <QGraphicsScene>
 #include <QGraphicsItem>
@@ -34,6 +35,7 @@ public slots:
     //void p3dDataReady(std::vector<point3c>);//mira como se hace FRAME.h
     //void setSrvKinect(SrvKinect sK);
     //void setLed(int led_Status);
+    void updateKinect();
 
 private slots:
     void init();
@@ -47,10 +49,12 @@ private slots:
     void on_pbStop_clicked();
     void on_combo_activated(const QString &arg1);
 
+    void printTimeVector(std::vector<int> &timeV);
+
     void attendNewClient();
 
 protected:
-//    void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
+    void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
 private:
     Ui::MainWindow *ui;
@@ -90,6 +94,8 @@ private:
 
     QTcpServer *mainServer;
     std::vector<AttendClient> attnClients;///< active AttendClient (to access them)
+
+    std::vector<int> timeVector;//msecs
 
 };
 

@@ -74,9 +74,14 @@ bool Apikinect::getDepth(std::vector<uint16_t> &buffer)
     return true;
 }
 
+/**
+ * @brief Apikinect::getAll
+ * funtion to retrieve point cloud & swetp ("barre") from video & depth data
+ * @param buffer3 buffer to receive point cloud
+ * @param bufferB buffer to receive swept ("barre")
+ */
 void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &bufferB)
 {
-    point2 p2;
     point3c p3;
     RGBQ color;
     buffer3.resize(1);
@@ -106,10 +111,10 @@ void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &buf
 }
 
 /**
- * @brief Apikinect::get3d 3 dimention + color points in buffer
- * plus 2D and Barrer buffers filled with last data available
- * @param buffer
- * @return number of point3d in buffer
+ * @brief Apikinect::get3d
+ * 3 dimention + color point cloud in buffer from video & depth data
+ * @param buffer  where point cloud is stored
+ * @return number of point3d in buffer = buffer.size()
  */
 int Apikinect::get3d(std::vector<point3c> &buffer)
 {
@@ -135,12 +140,36 @@ int Apikinect::get3d(std::vector<point3c> &buffer)
     return buffer.size();
 }
 
+/**
+ * @brief Apikinect::get2
+ * 2 dimention point cloud in buffer from video & depth data
+ * @param buffer where point cloud is stored
+ * @return number of point2d in buffer = buffer.size()
+ */
 int Apikinect::get2(std::vector<point2> &buffer)
 {
-    buffer.swap(m_buffer_2);
+    point2 p2;
+    buffer.resize(1);
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
+    //------------------------------------------------------time pre buffers
+    for (int i = 0; i < 480*640; ++i)
+    {
+        // Convert from image plane coordinates to world coordinates
+        if( (p2.z = m_buffer_depth[i]) != 0  ){                  // Z = d
+            p2.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;      // X = (x - cx) * d / fx
+            buffer.push_back(p2);//MainWindow::p2Buf
+        }
+    }//----------------------------------------------------------time post buffers
     return buffer.size();
 }
 
+/**
+ * @brief Apikinect::getBarrer
+ * 360 vector with distance at each angle 0º where camara is centered
+ * and from -89.5º to 90º each 1/2 degree (180*2=360 values)
+ * @param buffer where 360 distance values are stored
+ * @return number of points should be 360=buffer.size()
+ */
 int Apikinect::getBarrer(std::vector<uint32_t> &buffer)
 {
     point3c p3;

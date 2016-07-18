@@ -14,21 +14,29 @@ MainWindow::MainWindow(QWidget *parent) :
     setServerIp();
     putKcombo();
     barreInit();
+    data = new Data(this);
+
+    QMetaObject::Connection SN;
+    SN = connect(this->data,SIGNAL(dataChanged()),this,SLOT(updateKinect()));
+    if( !(bool)SN ) qDebug( "  falla el connect ");
+
 }
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    if(currentDeviceIndex !=-1){
+        stoploop();
+        stopK(currentDeviceIndex);
+    }
+
     delete sceneVideo;
     delete sceneDepth;
     delete sceneBarre;
     if( imgVideo != NULL ) delete imgVideo;
     if( imgDepth != NULL ) delete imgDepth;
     if( imgBarre != NULL ) delete imgBarre;
-    if(currentDeviceIndex !=-1){
-        stoploop();
-        stopK(currentDeviceIndex);
-    }
+
+    delete ui;
 }
 /**
  * @brief MainWindow::videoDataReady
@@ -108,6 +116,17 @@ void MainWindow::barreInit()
 
 }
 /**
+ * @brief MainWindow::updateKinect
+ * set current led option and angle on active kinect
+ */
+void MainWindow::updateKinect()
+{
+    qDebug("MainWindow::updateKinect()");
+    if( device != NULL ){
+        device->setLed(freenect_led_options(data->ledOption));
+    }
+}
+/**
  * @brief MainWindow::init
  * convenience function to initiate members
  */
@@ -132,6 +151,7 @@ void MainWindow::init()
     ui->gvVideo->setScene(sceneVideo);
     ui->gvDepth->setScene(sceneDepth);
     ui->gvBarre->setScene(sceneBarre);
+    timeVector.resize(6);
 }
 /**
  * @brief MainWindow::setServerIp
@@ -208,16 +228,53 @@ void MainWindow::loop()
 //    int countLimit(0);//stop while(flag) if no points DEBUG
 
     while( flag ){
+        timeVector.resize(0);
+        QTime t;
 
+        t.start();//---------------------------------------------time.start
         device->getRGB(videoBuf);
-        videoDataReady();//paint video on gvVideo
-        device->getDepth(depthBuf);
-        depthDataReady();//paint depth on gvDepth
+        timeVector.push_back(t.elapsed());//---------------------timeVector[0]
+        if( data->m_srvK->m_bEnvioColor)
+            videoDataReady();//paint video on gvVideo
 
-        device->getAll(p3Buf,barreBuf);
-        ui->glWidget->setpCloud(p3Buf,p3Buf.size());///---DEBUG remove p3Buf.size()
-        ui->glWidget->repaint();//paint points cloud on glwidget
-        barreDataReady();//paint Barrido (barre)
+        t.start();//---------------------------------------------time.start
+        device->getDepth(depthBuf);
+        timeVector.push_back(t.elapsed());//---------------------timeVector[1]
+        if( data->m_srvK->m_bEnvioDepth)
+            depthDataReady();//paint depth on gvDepth
+
+//        qApp->processEvents();//stay responsive to button click
+
+        if( data->m_srvK->m_bEnvio3D && data->m_srvK->m_bEnvioBarrido){//all buffers
+            t.start();//---------------------------------------------time.start
+            device->getAll(p3Buf,barreBuf);
+            timeVector.push_back(t.elapsed());//---------------------timeVector[2]
+
+            t.start();//---------------------------------------------time.start
+            ui->glWidget->setpCloud(p3Buf,p3Buf.size());///---DEBUG remove p3Buf.size()
+            ui->glWidget->repaint();//paint points cloud on glwidget
+            timeVector.push_back(t.elapsed());//---------------------timeVector[3]
+            t.start();//---------------------------------------------time.start
+            barreDataReady();//paint Barrido (barre)
+            timeVector.push_back(t.elapsed());//---------------------timeVector[4]
+        }
+
+        printTimeVector(timeVector);
+
+        if(!(data->m_srvK->m_bEnvio3D) && data->m_srvK->m_bEnvioBarrido){//only swept ("barre")
+            t.start();//---------------------------------------------time.start
+            device->getBarrer(barreBuf);
+            timeVector.push_back(t.elapsed());//---------------------timeVector[5]
+            barreDataReady();//paint Barrido (barre)
+            qDebug("NO DEBERÍA ESTAR EN SOLO BARRE");
+        }else if(data->m_srvK->m_bEnvio2D){
+            t.start();//---------------------------------------------time.start
+            device->get2(p2Buf);//to control 2D calc
+            timeVector.push_back(t.elapsed());//---------------------timeVector[6]
+            qDebug("NO DEBERÍA ESTAR EN SOLO 2D");
+        }
+
+        //printTimeVector(timeVector);
 
         qApp->processEvents();//stay responsive to button click
     }
@@ -275,18 +332,48 @@ void MainWindow::on_combo_activated(const QString &arg1)
         ui->textEdit->setText(" First stop running kinect, then start the other.");
     }
 }
+/**
+ * @brief MainWindow::printTimeVector
+ * aux function to control time spend in calculus or painting
+ * @param timeV
+ */
+void MainWindow::printTimeVector(std::vector<int> &timeV)
+{
+    QString str,aux;
+    str = "get video = ";
+    aux.setNum(timeV[0]);
+    str.append(aux);
+    aux = " \nget depth = ";
+    str.append(aux);
+    aux.setNum(timeV[1]);
+    str.append(aux);
+    aux = " \nget buffer = ";
+    str.append(aux);
+    aux.setNum(timeV[2]);
+    str.append(aux);
+    aux = "\npinta3D = ";
+    str.append(aux);
+    aux.setNum(timeV[3]);
+    str.append(aux);
+    aux = "\npintaB = ";
+    str.append(aux);
+    aux.setNum(timeV[4]);
+    str.append(aux);
+    ui->textEdit->setText(str);
+}
 
 void MainWindow::attendNewClient()
 {
 
 }
-/* Al parecer pasa por ~MainWindow al cerrar ¿por qué se queja a veces?
+// Al parecer pasa por ~MainWindow al cerrar ¿por qué se queja a veces?
+/**
  * @brief MainWindow::closeEvent
  * override window close event to stop loop and delete apikinect handler
  * @param event
- *//*
+ */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     this->~MainWindow();
     exit(0);
-}*/
+}

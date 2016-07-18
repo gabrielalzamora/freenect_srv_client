@@ -1,5 +1,6 @@
 #include "data.h"
 
+
 Data::Data(QWidget *parent) : QWidget(parent)
 {
     //------------Start TAB LAYOUT-----------!!!!!!!!!
@@ -153,8 +154,8 @@ Data::Data(QWidget *parent) : QWidget(parent)
         LyPoints2->addWidget(PointsSliderM);
         LyPoints2->addWidget(PointsLabelSliderM);
 
-        PointsCBenvio3D = new QCheckBox("envío 3D");///---------------------------AQUI
-        PointsCBenvio3D->setChecked(false);
+        PointsCBenvio3D = new QCheckBox("envío 3D");
+        PointsCBenvio3D->setChecked(true);
         PointsCBenvio2 = new QCheckBox("envío 2D");
         PointsCBenvio2->setChecked(false);
         PointsCBenvioB= new QCheckBox("envío Barrido");
@@ -209,6 +210,13 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QRadioButton *blinkG = new QRadioButton("blink green");
         QRadioButton *blinkRY = new QRadioButton("blink R/Y");
         QHBoxLayout *LyLed = new QHBoxLayout;
+        ledGroup = new QButtonGroup(this);//to handle led state selected
+        ledGroup->addButton(off,0);
+        ledGroup->addButton(green,1);
+        ledGroup->addButton(red,2);
+        ledGroup->addButton(yellow,3);
+        ledGroup->addButton(blinkG,4);
+        ledGroup->addButton(blinkRY,6);
         LyLed->addWidget(off);
         LyLed->addWidget(green);
         LyLed->addWidget(red);
@@ -216,6 +224,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
         LyLed->addWidget(blinkG);
         LyLed->addWidget(blinkRY);
         off->setChecked(true);
+        ledOption = 0;//--------ledOption(0)
     gbLed->setLayout(LyLed);
 
     QHBoxLayout *LyTab1 = new QHBoxLayout;//upper tab layout depth+video
@@ -247,14 +256,14 @@ Data::Data(QWidget *parent) : QWidget(parent)
     connect(PointsSliderM,SIGNAL(sliderMoved(int)),PointsLabelSliderM,SLOT(setNum(int)));
     //------------END TAB LAYOUT-----------!!!!!!!!!!
     //------------let's connect-------------
-    connect(LimitsLineEAngulo,SIGNAL(editingFinished()),this,SLOT(setData()));
+    connect(LimitsLineEAngulo,SIGNAL(editingFinished()),this,SLOT(setData()));//---limits
     connect(LimitsLineEAngK,SIGNAL(editingFinished()),this,SLOT(setData()));
     connect(LimitsLineEAltura,SIGNAL(editingFinished()),this,SLOT(setData()));
     connect(LimitsLineEYmin,SIGNAL(editingFinished()),this,SLOT(setData()));
     connect(LimitsLineEYmax,SIGNAL(editingFinished()),this,SLOT(setData()));
     connect(LimitsLineEZmax,SIGNAL(editingFinished()),this,SLOT(setData()));
 
-    connect(PointsSlider,SIGNAL(sliderReleased()),this,SLOT(setData()));
+    connect(PointsSlider,SIGNAL(sliderReleased()),this,SLOT(setData()));//---------points
     connect(PointsSliderM,SIGNAL(sliderReleased()),this,SLOT(setData()));
     connect(PointsCBenvio3D,SIGNAL(stateChanged(int)),this,SLOT(setData()));
     connect(PointsCBenvio2,SIGNAL(stateChanged(int)),this,SLOT(setData()));
@@ -264,17 +273,46 @@ Data::Data(QWidget *parent) : QWidget(parent)
     connect(PointsLineEYmin,SIGNAL(editingFinished()),this,SLOT(setData()));
     connect(PointsLineEYmax,SIGNAL(editingFinished()),this,SLOT(setData()));
 
-    connect(DepthSlider,SIGNAL(sliderReleased()),this,SLOT(setData()));
+    connect(DepthSlider,SIGNAL(sliderReleased()),this,SLOT(setData()));//----------depth
     connect(DepthCBenvio,SIGNAL(stateChanged(int)),this,SLOT(setData()));
     connect(DepthCBcomprimido,SIGNAL(stateChanged(int)),this,SLOT(setData()));
-    connect(VideoSlider,SIGNAL(sliderReleased()),this,SLOT(setData()));
+    connect(VideoSlider,SIGNAL(sliderReleased()),this,SLOT(setData()));//----------video
     connect(VideoCBenvio,SIGNAL(stateChanged(int)),this,SLOT(setData()));
     connect(VideoCBcomprimido,SIGNAL(stateChanged(int)),this,SLOT(setData()));
+
+    connect(ledGroup,SIGNAL(buttonClicked(int)),this,SLOT(setLedOption(int)));//---led
 
     m_srvK = new SrvKinect;
     setData();
 }
 
+/**
+ * @brief Data::setLedOption
+ * to set led light on kinect
+ * @param option integer that holds led light value
+ */
+void Data::setLedOption(int option)
+{
+    qDebug("salta Data::setLedOption opot = %d",option);
+    if(option != ledOption){
+        ledOption = option;
+        emit this->dataChanged();
+    }
+}
+
+/**
+ * @brief Data::getLedOption
+ * @return
+ */
+int Data::getLedOption()
+{
+    return ledOption;
+}
+
+/**
+ * @brief Data::setData
+ * set data members values as selected in tab_2
+ */
 void Data::setData()
 {
     m_srvK->m_fAngulo = LimitsLineEAngulo->text().toFloat();
@@ -283,14 +321,7 @@ void Data::setData()
     m_srvK->m_fYMin = LimitsLineEYmin->text().toFloat();
     m_srvK->m_fYMax = LimitsLineEYmax->text().toFloat();
     m_srvK->m_fZMax = LimitsLineEZmax->text().toFloat();
-    {
-        qDebug("  el angulo = %f",m_srvK->m_fAngulo);
-        qDebug("  el ang K = %d",m_srvK->m_iAnguloKinect);
-        qDebug("  altura = %f",m_srvK->m_fAltura);
-        qDebug("  Ymin = %f",m_srvK->m_fYMin);
-        qDebug("  YMAX = %f",m_srvK->m_fYMax);
-        qDebug("  Zmax = %f",m_srvK->m_fZMax);
-    }
+
     m_srvK->m_ulRefresco3D = PointsSlider->value();
     m_srvK->m_usModulo3D = PointsSliderM->value();
     if( PointsCBenvio3D->isChecked() ) m_srvK->m_bEnvio3D = 1;
@@ -304,17 +335,7 @@ void Data::setData()
     m_srvK->m_iBarridoEcu = PointsLineEEcu->text().toInt();
     m_srvK->m_iBarridoYMin = PointsLineEYmin->text().toInt();
     m_srvK->m_iBarridoYMax = PointsLineEYmax->text().toInt();
-    {
-        qDebug("  el refresco es = %d",m_srvK->m_ulRefresco3D);
-        qDebug("  el modulo = %d",m_srvK->m_usModulo3D);
-        qDebug("  el check 3D = %d",m_srvK->m_bEnvio3D);
-        qDebug("  el check 2D = %d",m_srvK->m_bEnvio2D);
-        qDebug("  el check Barrido = %d",m_srvK->m_bEnvioBarrido);
-        qDebug("  el check Compri3D = %d",m_srvK->m_bCompress3D);
-        qDebug( " barridoEcu = da igual = %d",m_srvK->m_iBarridoEcu);
-        qDebug( " barridoYmin = %d",m_srvK->m_iBarridoYMin);
-        qDebug( " barridoYmaxl = %d",m_srvK->m_iBarridoYMax);
-    }
+
     m_srvK->m_ulRefrescoDepth = DepthSlider->value();
     if( DepthCBenvio->isChecked() ) m_srvK->m_bEnvioDepth = 1;
     else m_srvK->m_bEnvioDepth = 0;
@@ -325,16 +346,13 @@ void Data::setData()
     else m_srvK->m_bEnvioColor = 0;
     if( VideoCBcomprimido->isChecked() ) m_srvK->m_bCompressColor = 1;
     else m_srvK->m_bCompressColor = 0;
-    {
-        qDebug("  depth slider = %d",m_srvK->m_ulRefrescoDepth);
-        qDebug("  depth envio = %d",m_srvK->m_bEnvioDepth);
-        qDebug("  depth compressss = %d",m_srvK->m_bCompressDepth);
-        qDebug("  video/color slider = %d",m_srvK->m_ulRefrescoColor);
-        qDebug("  video/color envio = %d",m_srvK->m_bEnvioColor);
-        qDebug("  video/color compressss = %d",m_srvK->m_bCompressColor);
-    }
 }
 
+/**
+ * @brief Data::setSrvK
+ * sets individual values to all members of SrvKinect
+ * @param newSrvK   SrvKinect to copy in m_srvK
+ */
 void Data::setSrvK(SrvKinect newSrvK)
 {
     m_srvK->m_fAngulo = newSrvK.m_fAngulo;

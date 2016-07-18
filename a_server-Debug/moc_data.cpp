@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_Data_t {
-    QByteArrayData data[10];
-    char stringdata0[82];
+    QByteArrayData data[13];
+    char stringdata0[115];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -35,15 +35,18 @@ QT_MOC_LITERAL(2, 17, 0), // ""
 QT_MOC_LITERAL(3, 18, 11), // "srvKChanged"
 QT_MOC_LITERAL(4, 30, 9), // "srvKinect"
 QT_MOC_LITERAL(5, 40, 7), // "newSrvK"
-QT_MOC_LITERAL(6, 48, 7), // "setData"
-QT_MOC_LITERAL(7, 56, 7), // "setSrvK"
-QT_MOC_LITERAL(8, 64, 9), // "SrvKinect"
-QT_MOC_LITERAL(9, 74, 7) // "getSrvK"
+QT_MOC_LITERAL(6, 48, 12), // "setLedOption"
+QT_MOC_LITERAL(7, 61, 6), // "option"
+QT_MOC_LITERAL(8, 68, 12), // "getLedOption"
+QT_MOC_LITERAL(9, 81, 7), // "setData"
+QT_MOC_LITERAL(10, 89, 7), // "setSrvK"
+QT_MOC_LITERAL(11, 97, 9), // "SrvKinect"
+QT_MOC_LITERAL(12, 107, 7) // "getSrvK"
 
     },
     "Data\0dataChanged\0\0srvKChanged\0srvKinect\0"
-    "newSrvK\0setData\0setSrvK\0SrvKinect\0"
-    "getSrvK"
+    "newSrvK\0setLedOption\0option\0getLedOption\0"
+    "setData\0setSrvK\0SrvKinect\0getSrvK"
 };
 #undef QT_MOC_LITERAL
 
@@ -53,7 +56,7 @@ static const uint qt_meta_data_Data[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-       5,   14, // methods
+       7,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -61,22 +64,26 @@ static const uint qt_meta_data_Data[] = {
        2,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    0,   39,    2, 0x06 /* Public */,
-       3,    1,   40,    2, 0x06 /* Public */,
+       1,    0,   49,    2, 0x06 /* Public */,
+       3,    1,   50,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       6,    0,   43,    2, 0x0a /* Public */,
-       7,    1,   44,    2, 0x0a /* Public */,
-       9,    0,   47,    2, 0x0a /* Public */,
+       6,    1,   53,    2, 0x0a /* Public */,
+       8,    0,   56,    2, 0x0a /* Public */,
+       9,    0,   57,    2, 0x0a /* Public */,
+      10,    1,   58,    2, 0x0a /* Public */,
+      12,    0,   61,    2, 0x0a /* Public */,
 
  // signals: parameters
     QMetaType::Void,
     QMetaType::Void, 0x80000000 | 4,    5,
 
  // slots: parameters
+    QMetaType::Void, QMetaType::Int,    7,
+    QMetaType::Int,
     QMetaType::Void,
-    QMetaType::Void, 0x80000000 | 8,    5,
-    0x80000000 | 8,
+    QMetaType::Void, 0x80000000 | 11,    5,
+    0x80000000 | 11,
 
        0        // eod
 };
@@ -89,9 +96,12 @@ void Data::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void *
         switch (_id) {
         case 0: _t->dataChanged(); break;
         case 1: _t->srvKChanged((*reinterpret_cast< srvKinect(*)>(_a[1]))); break;
-        case 2: _t->setData(); break;
-        case 3: _t->setSrvK((*reinterpret_cast< SrvKinect(*)>(_a[1]))); break;
-        case 4: { SrvKinect _r = _t->getSrvK();
+        case 2: _t->setLedOption((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 3: { int _r = _t->getLedOption();
+            if (_a[0]) *reinterpret_cast< int*>(_a[0]) = _r; }  break;
+        case 4: _t->setData(); break;
+        case 5: _t->setSrvK((*reinterpret_cast< SrvKinect(*)>(_a[1]))); break;
+        case 6: { SrvKinect _r = _t->getSrvK();
             if (_a[0]) *reinterpret_cast< SrvKinect*>(_a[0]) = _r; }  break;
         default: ;
         }
@@ -138,13 +148,13 @@ int Data::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 5)
+        if (_id < 7)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 5;
+        _id -= 7;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 5)
+        if (_id < 7)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 5;
+        _id -= 7;
     }
     return _id;
 }
