@@ -59,10 +59,11 @@ class Data : public QWidget
     Q_OBJECT
 public:
     explicit Data(QWidget *parent = 0);
-    SrvKinect *m_srvK;
+    srvKinect m_srvK;
     int ledOption;
 
 signals:
+    void ledOptionChanged();
     void dataChanged();
     void srvKChanged(srvKinect newSrvK);
 
@@ -70,12 +71,10 @@ public slots:
     void setLedOption(int option);
     int getLedOption();
     void setData();
-    void setSrvK(SrvKinect newSrvK);
-    SrvKinect getSrvK();
+    void setSrvK(srvKinect newSrvK);
+    srvKinect getSrvK();
 
 private:
-//    SrvKinect *m_srvK;
-//    int ledOption;
 //  tab_2 data
     QLineEdit *LimitsLineEAngulo;
     QLineEdit *LimitsLineEAngK;

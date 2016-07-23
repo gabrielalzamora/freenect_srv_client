@@ -1,4 +1,5 @@
 
+
 #include <QNetworkInterface>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -10,16 +11,14 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     numDevices = freenect.deviceCount();
+
     init();
     setServerIp();
     putKcombo();
-    barreInit();
-    data = new Data(this);
+    barridoInit();
 
-    QMetaObject::Connection SN;
-    SN = connect(this->data,SIGNAL(dataChanged()),this,SLOT(updateKinect()));
-    if( !(bool)SN ) qDebug( "  falla el connect ");
-
+    connect(ui->tab_2,SIGNAL(dataChanged()),this,SLOT(updateKinect()));
+    connect(ui->tab_2,SIGNAL(ledOptionChanged()),this,SLOT(updateKinect()));
 }
 
 MainWindow::~MainWindow()
@@ -35,7 +34,6 @@ MainWindow::~MainWindow()
     if( imgVideo != NULL ) delete imgVideo;
     if( imgDepth != NULL ) delete imgDepth;
     if( imgBarre != NULL ) delete imgBarre;
-
     delete ui;
 }
 /**
@@ -46,7 +44,6 @@ MainWindow::~MainWindow()
 void MainWindow::videoDataReady()
 {
     if( imgVideo != NULL ) delete imgVideo;
-//    imgVideo = new QImage(buf.data(),640,480,QImage::Format_RGB888);
     imgVideo = new QImage(videoBuf.data(),640,480,QImage::Format_RGB888);
     sceneVideo->addPixmap(QPixmap::fromImage(*imgVideo).scaled(320,240,Qt::KeepAspectRatio));
     ui->gvVideo->show();
@@ -76,7 +73,7 @@ void MainWindow::depthDataReady()
  * @brief MainWindow::barreDataReady
  * draw barrido (barre) (on ui->gvBarre sceneBarre using
  */
-void MainWindow::barreDataReady()
+void MainWindow::barridoDataReady()
 {
     int x,y;
     int aux(0);
@@ -88,22 +85,20 @@ void MainWindow::barreDataReady()
         ellipseVector.resize(0);
     }
     for(int i=0;i<360;i++){
-        if(barreBuf[i] == 0) continue;//no data info no plot
-        y = 235-(235*barreBuf[i]/4000);//divide barreBuf[i] by max mesured distance to fit in screen
+        if(barridoBuf[i] == 0) continue;//no data info no plot
+        y = 235-(235*barridoBuf[i]/ui->tab_2->m_srvK.m_fZMax);//divide barridoBuf[i] by max mesured distance to fit in screen
         x = 320*(360-i)/360;
-//        qDebug("  x = %d   y = %d , barre = %d",x,y, barreBuf[i]);
         ellipseVector.push_back(new QGraphicsEllipseItem(x,y,1.0,1.0));
         sceneBarre->addItem(ellipseVector[aux]);
         aux++;
     }
-//    qDebug("  x = %d   y = %d , barre = %d",x,y, barreBuf[180]);
     ui->gvBarre->show();
 }
 /**
  * @brief MainWindow::barreInit
  * draw axes on sceneBarre to show on gvBarre
  */
-void MainWindow::barreInit()
+void MainWindow::barridoInit()
 {
     ui->gvBarre->setBackgroundBrush(QColor(200,240,240,255));//light blue
     sceneBarre->setBackgroundBrush(QColor(200,240,240,255));
@@ -121,9 +116,9 @@ void MainWindow::barreInit()
  */
 void MainWindow::updateKinect()
 {
-    qDebug("MainWindow::updateKinect()");
     if( device != NULL ){
-        device->setLed(freenect_led_options(data->ledOption));
+        device->setLed(freenect_led_options(ui->tab_2->ledOption));
+        device->setTiltDegrees(double(ui->tab_2->m_srvK.m_iAnguloKinect));
     }
 }
 /**
@@ -139,7 +134,7 @@ void MainWindow::init()
     depthBuf.resize(640*480);
     p3Buf.reserve(300000);//max number of points
     p3Buf.resize(0);//initially we have none
-    barreBuf.resize(360);
+    barridoBuf.resize(360);
     ellipseVector.reserve(360);
     ellipseVector.resize(0);
     sceneVideo = new QGraphicsScene;
@@ -224,9 +219,6 @@ void MainWindow::stopK(int indexK)
 void MainWindow::loop()
 {
     flag = 1;
-//    int count(0);//number of points in bufferCloud
-//    int countLimit(0);//stop while(flag) if no points DEBUG
-
     while( flag ){
         timeVector.resize(0);
         QTime t;
@@ -234,20 +226,21 @@ void MainWindow::loop()
         t.start();//---------------------------------------------time.start
         device->getRGB(videoBuf);
         timeVector.push_back(t.elapsed());//---------------------timeVector[0]
-        if( data->m_srvK->m_bEnvioColor)
+        if( ui->tab_2->m_srvK.m_bEnvioColor ){
             videoDataReady();//paint video on gvVideo
+        }
 
         t.start();//---------------------------------------------time.start
         device->getDepth(depthBuf);
         timeVector.push_back(t.elapsed());//---------------------timeVector[1]
-        if( data->m_srvK->m_bEnvioDepth)
+        if( ui->tab_2->m_srvK.m_bEnvioDepth )
             depthDataReady();//paint depth on gvDepth
 
 //        qApp->processEvents();//stay responsive to button click
 
-        if( data->m_srvK->m_bEnvio3D && data->m_srvK->m_bEnvioBarrido){//all buffers
+        if( ui->tab_2->m_srvK.m_bEnvio3D && ui->tab_2->m_srvK.m_bEnvioBarrido){//all buffers
             t.start();//---------------------------------------------time.start
-            device->getAll(p3Buf,barreBuf);
+            device->getAll(p3Buf,barridoBuf);
             timeVector.push_back(t.elapsed());//---------------------timeVector[2]
 
             t.start();//---------------------------------------------time.start
@@ -255,19 +248,19 @@ void MainWindow::loop()
             ui->glWidget->repaint();//paint points cloud on glwidget
             timeVector.push_back(t.elapsed());//---------------------timeVector[3]
             t.start();//---------------------------------------------time.start
-            barreDataReady();//paint Barrido (barre)
+            barridoDataReady();//paint Barrido (barre)
             timeVector.push_back(t.elapsed());//---------------------timeVector[4]
         }
 
         printTimeVector(timeVector);
 
-        if(!(data->m_srvK->m_bEnvio3D) && data->m_srvK->m_bEnvioBarrido){//only swept ("barre")
+        if(!(ui->tab_2->m_srvK.m_bEnvio3D) && ui->tab_2->m_srvK.m_bEnvioBarrido){//only swept ("barrido")
             t.start();//---------------------------------------------time.start
-            device->getBarrer(barreBuf);
+            device->getBarrido(barridoBuf);
             timeVector.push_back(t.elapsed());//---------------------timeVector[5]
-            barreDataReady();//paint Barrido (barre)
+            barridoDataReady();//paint Barrido (barre)
             qDebug("NO DEBERÍA ESTAR EN SOLO BARRE");
-        }else if(data->m_srvK->m_bEnvio2D){
+        }else if(ui->tab_2->m_srvK.m_bEnvio2D){
             t.start();//---------------------------------------------time.start
             device->get2(p2Buf);//to control 2D calc
             timeVector.push_back(t.elapsed());//---------------------timeVector[6]
@@ -366,6 +359,7 @@ void MainWindow::attendNewClient()
 {
 
 }
+
 // Al parecer pasa por ~MainWindow al cerrar ¿por qué se queja a veces?
 /**
  * @brief MainWindow::closeEvent

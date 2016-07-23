@@ -170,7 +170,7 @@ int Apikinect::get2(std::vector<point2> &buffer)
  * @param buffer where 360 distance values are stored
  * @return number of points should be 360=buffer.size()
  */
-int Apikinect::getBarrer(std::vector<uint32_t> &buffer)
+int Apikinect::getBarrido(std::vector<uint32_t> &buffer)
 {
     point3c p3;
     for(int i=0;i<360;i++) buffer[i]=0;

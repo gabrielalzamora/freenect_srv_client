@@ -1,3 +1,4 @@
+
 #include "data.h"
 
 
@@ -105,7 +106,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
 
         QLabel *LimitsLabelZmax = new QLabel(tr("Z max"));
         LimitsLineEZmax = new QLineEdit();
-        LimitsLineEZmax->setText("7000.0");
+        LimitsLineEZmax->setText("4000.0");
         QHBoxLayout *LyZmax = new QHBoxLayout;
         LyZmax->addWidget(LimitsLabelZmax);
         LyZmax->addWidget(LimitsLineEZmax);
@@ -282,27 +283,25 @@ Data::Data(QWidget *parent) : QWidget(parent)
 
     connect(ledGroup,SIGNAL(buttonClicked(int)),this,SLOT(setLedOption(int)));//---led
 
-    m_srvK = new SrvKinect;
     setData();
 }
 
 /**
  * @brief Data::setLedOption
  * to set led light on kinect
- * @param option integer that holds led light value
+ * @param integer holding freenect_led_options value to set led light
  */
 void Data::setLedOption(int option)
 {
-    qDebug("salta Data::setLedOption opot = %d",option);
     if(option != ledOption){
         ledOption = option;
-        emit this->dataChanged();
+        emit dataChanged();
     }
 }
 
 /**
  * @brief Data::getLedOption
- * @return
+ * @return int value of freenect_led_options
  */
 int Data::getLedOption()
 {
@@ -315,71 +314,77 @@ int Data::getLedOption()
  */
 void Data::setData()
 {
-    m_srvK->m_fAngulo = LimitsLineEAngulo->text().toFloat();
-    m_srvK->m_iAnguloKinect = LimitsLineEAngK->text().toInt();
-    m_srvK->m_fAltura = LimitsLineEAltura->text().toFloat();
-    m_srvK->m_fYMin = LimitsLineEYmin->text().toFloat();
-    m_srvK->m_fYMax = LimitsLineEYmax->text().toFloat();
-    m_srvK->m_fZMax = LimitsLineEZmax->text().toFloat();
+    m_srvK.m_fAngulo = LimitsLineEAngulo->text().toFloat();
+    m_srvK.m_iAnguloKinect = LimitsLineEAngK->text().toInt();
+    m_srvK.m_fAltura = LimitsLineEAltura->text().toFloat();
+    m_srvK.m_fYMin = LimitsLineEYmin->text().toFloat();
+    m_srvK.m_fYMax = LimitsLineEYmax->text().toFloat();
+    m_srvK.m_fZMax = LimitsLineEZmax->text().toFloat();
 
-    m_srvK->m_ulRefresco3D = PointsSlider->value();
-    m_srvK->m_usModulo3D = PointsSliderM->value();
-    if( PointsCBenvio3D->isChecked() ) m_srvK->m_bEnvio3D = 1;
-    else m_srvK->m_bEnvio3D = 0;
-    if( PointsCBenvio2->isChecked() ) m_srvK->m_bEnvio2D = 1;
-    else m_srvK->m_bEnvio2D = 0;
-    if( PointsCBenvioB->isChecked() ) m_srvK->m_bEnvioBarrido = 1;
-    else m_srvK->m_bEnvioBarrido = 0;
-    if( PointsCBcomprimido->isChecked() ) m_srvK->m_bCompress3D = 1;
-    else m_srvK->m_bCompress3D = 0;
-    m_srvK->m_iBarridoEcu = PointsLineEEcu->text().toInt();
-    m_srvK->m_iBarridoYMin = PointsLineEYmin->text().toInt();
-    m_srvK->m_iBarridoYMax = PointsLineEYmax->text().toInt();
+    m_srvK.m_ulRefresco3D = PointsSlider->value();
+    m_srvK.m_usModulo3D = PointsSliderM->value();
+    if( PointsCBenvio3D->isChecked() ) m_srvK.m_bEnvio3D = 1;
+    else m_srvK.m_bEnvio3D = 0;
+    if( PointsCBenvio2->isChecked() ) m_srvK.m_bEnvio2D = 1;
+    else m_srvK.m_bEnvio2D = 0;
+    if( PointsCBenvioB->isChecked() ) m_srvK.m_bEnvioBarrido = 1;
+    else m_srvK.m_bEnvioBarrido = 0;
+    if( PointsCBcomprimido->isChecked() ) m_srvK.m_bCompress3D = 1;
+    else m_srvK.m_bCompress3D = 0;
+    m_srvK.m_iBarridoEcu = PointsLineEEcu->text().toInt();
+    m_srvK.m_iBarridoYMin = PointsLineEYmin->text().toInt();
+    m_srvK.m_iBarridoYMax = PointsLineEYmax->text().toInt();
 
-    m_srvK->m_ulRefrescoDepth = DepthSlider->value();
-    if( DepthCBenvio->isChecked() ) m_srvK->m_bEnvioDepth = 1;
-    else m_srvK->m_bEnvioDepth = 0;
-    if( DepthCBcomprimido->isChecked() ) m_srvK->m_bCompressDepth = 1;
-    else m_srvK->m_bCompressDepth = 0;
-    m_srvK->m_ulRefrescoColor = VideoSlider->value();
-    if( VideoCBenvio->isChecked() ) m_srvK->m_bEnvioColor = 1;
-    else m_srvK->m_bEnvioColor = 0;
-    if( VideoCBcomprimido->isChecked() ) m_srvK->m_bCompressColor = 1;
-    else m_srvK->m_bCompressColor = 0;
+    m_srvK.m_ulRefrescoDepth = DepthSlider->value();
+    if( DepthCBenvio->isChecked() ) m_srvK.m_bEnvioDepth = 1;
+    else m_srvK.m_bEnvioDepth = 0;
+    if( DepthCBcomprimido->isChecked() ) m_srvK.m_bCompressDepth = 1;
+    else m_srvK.m_bCompressDepth = 0;
+    m_srvK.m_ulRefrescoColor = VideoSlider->value();
+    if( VideoCBenvio->isChecked() ) m_srvK.m_bEnvioColor = 1;
+    else m_srvK.m_bEnvioColor = 0;
+    if( VideoCBcomprimido->isChecked() ) m_srvK.m_bCompressColor = 1;
+    else m_srvK.m_bCompressColor = 0;
+
+    emit dataChanged();
 }
 
 /**
  * @brief Data::setSrvK
- * sets individual values to all members of SrvKinect
- * @param newSrvK   SrvKinect to copy in m_srvK
+ * sets individual values to all members of srvKinect
+ * @param newSrvK   srvKinect to copy in Data.m_srvK
  */
-void Data::setSrvK(SrvKinect newSrvK)
+void Data::setSrvK(srvKinect newSrvK)
 {
-    m_srvK->m_fAngulo = newSrvK.m_fAngulo;
-    m_srvK->m_iAnguloKinect = newSrvK.m_iAnguloKinect;
-    m_srvK->m_fAltura = newSrvK.m_fAltura;
-    m_srvK->m_fYMin = newSrvK.m_fYMin;
-    m_srvK->m_fYMax = newSrvK.m_fYMax;
-    m_srvK->m_fZMax = newSrvK.m_fZMax;
-    m_srvK->m_ulRefresco3D = newSrvK.m_ulRefresco3D;
-    m_srvK->m_usModulo3D = newSrvK.m_usModulo3D;
-    m_srvK->m_bEnvio3D = newSrvK.m_bEnvio3D;
-    m_srvK->m_bEnvio2D = newSrvK.m_bEnvio2D;
-    m_srvK->m_bEnvioBarrido = newSrvK.m_bEnvioBarrido;
-    m_srvK->m_bCompress3D = newSrvK.m_bCompress3D;
-    m_srvK->m_iBarridoEcu = newSrvK.m_iBarridoEcu;
-    m_srvK->m_iBarridoYMin = newSrvK.m_iBarridoYMin;
-    m_srvK->m_iBarridoYMax = newSrvK.m_iBarridoYMax;
-    m_srvK->m_ulRefrescoDepth = newSrvK.m_ulRefrescoDepth;
-    m_srvK->m_bEnvioDepth = newSrvK.m_bEnvioDepth;
-    m_srvK->m_bCompressDepth = newSrvK.m_bCompressDepth;
-    m_srvK->m_ulRefrescoColor = newSrvK.m_ulRefrescoColor;
-    m_srvK->m_bEnvioColor = newSrvK.m_bEnvioColor;
-    m_srvK->m_bCompressColor = newSrvK.m_bCompressColor;
+    m_srvK.m_fAngulo = newSrvK.m_fAngulo;
+    m_srvK.m_iAnguloKinect = newSrvK.m_iAnguloKinect;
+    m_srvK.m_fAltura = newSrvK.m_fAltura;
+    m_srvK.m_fYMin = newSrvK.m_fYMin;
+    m_srvK.m_fYMax = newSrvK.m_fYMax;
+    m_srvK.m_fZMax = newSrvK.m_fZMax;
+    m_srvK.m_ulRefresco3D = newSrvK.m_ulRefresco3D;
+    m_srvK.m_usModulo3D = newSrvK.m_usModulo3D;
+    m_srvK.m_bEnvio3D = newSrvK.m_bEnvio3D;
+    m_srvK.m_bEnvio2D = newSrvK.m_bEnvio2D;
+    m_srvK.m_bEnvioBarrido = newSrvK.m_bEnvioBarrido;
+    m_srvK.m_bCompress3D = newSrvK.m_bCompress3D;
+    m_srvK.m_iBarridoEcu = newSrvK.m_iBarridoEcu;
+    m_srvK.m_iBarridoYMin = newSrvK.m_iBarridoYMin;
+    m_srvK.m_iBarridoYMax = newSrvK.m_iBarridoYMax;
+    m_srvK.m_ulRefrescoDepth = newSrvK.m_ulRefrescoDepth;
+    m_srvK.m_bEnvioDepth = newSrvK.m_bEnvioDepth;
+    m_srvK.m_bCompressDepth = newSrvK.m_bCompressDepth;
+    m_srvK.m_ulRefrescoColor = newSrvK.m_ulRefrescoColor;
+    m_srvK.m_bEnvioColor = newSrvK.m_bEnvioColor;
+    m_srvK.m_bCompressColor = newSrvK.m_bCompressColor;
 }
 
-SrvKinect Data::getSrvK()
+/**
+ * @brief Data::getSrvK
+ * @return Data.m_srvK
+ */
+srvKinect Data::getSrvK()
 {
-    return *m_srvK;
+    return m_srvK;
 }
 

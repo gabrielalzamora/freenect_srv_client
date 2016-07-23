@@ -20,7 +20,7 @@
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_MainWindow_t {
     QByteArrayData data[23];
-    char stringdata0[255];
+    char stringdata0[259];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -33,29 +33,29 @@ QT_MOC_LITERAL(0, 0, 10), // "MainWindow"
 QT_MOC_LITERAL(1, 11, 14), // "videoDataReady"
 QT_MOC_LITERAL(2, 26, 0), // ""
 QT_MOC_LITERAL(3, 27, 14), // "depthDataReady"
-QT_MOC_LITERAL(4, 42, 14), // "barreDataReady"
-QT_MOC_LITERAL(5, 57, 9), // "barreInit"
-QT_MOC_LITERAL(6, 67, 12), // "updateKinect"
-QT_MOC_LITERAL(7, 80, 4), // "init"
-QT_MOC_LITERAL(8, 85, 11), // "setServerIp"
-QT_MOC_LITERAL(9, 97, 9), // "putKcombo"
-QT_MOC_LITERAL(10, 107, 6), // "startK"
-QT_MOC_LITERAL(11, 114, 6), // "indexK"
-QT_MOC_LITERAL(12, 121, 5), // "stopK"
-QT_MOC_LITERAL(13, 127, 4), // "loop"
-QT_MOC_LITERAL(14, 132, 8), // "stoploop"
-QT_MOC_LITERAL(15, 141, 15), // "on_pbGo_clicked"
-QT_MOC_LITERAL(16, 157, 17), // "on_pbStop_clicked"
-QT_MOC_LITERAL(17, 175, 18), // "on_combo_activated"
-QT_MOC_LITERAL(18, 194, 4), // "arg1"
-QT_MOC_LITERAL(19, 199, 15), // "printTimeVector"
-QT_MOC_LITERAL(20, 215, 17), // "std::vector<int>&"
-QT_MOC_LITERAL(21, 233, 5), // "timeV"
-QT_MOC_LITERAL(22, 239, 15) // "attendNewClient"
+QT_MOC_LITERAL(4, 42, 16), // "barridoDataReady"
+QT_MOC_LITERAL(5, 59, 11), // "barridoInit"
+QT_MOC_LITERAL(6, 71, 12), // "updateKinect"
+QT_MOC_LITERAL(7, 84, 4), // "init"
+QT_MOC_LITERAL(8, 89, 11), // "setServerIp"
+QT_MOC_LITERAL(9, 101, 9), // "putKcombo"
+QT_MOC_LITERAL(10, 111, 6), // "startK"
+QT_MOC_LITERAL(11, 118, 6), // "indexK"
+QT_MOC_LITERAL(12, 125, 5), // "stopK"
+QT_MOC_LITERAL(13, 131, 4), // "loop"
+QT_MOC_LITERAL(14, 136, 8), // "stoploop"
+QT_MOC_LITERAL(15, 145, 15), // "on_pbGo_clicked"
+QT_MOC_LITERAL(16, 161, 17), // "on_pbStop_clicked"
+QT_MOC_LITERAL(17, 179, 18), // "on_combo_activated"
+QT_MOC_LITERAL(18, 198, 4), // "arg1"
+QT_MOC_LITERAL(19, 203, 15), // "printTimeVector"
+QT_MOC_LITERAL(20, 219, 17), // "std::vector<int>&"
+QT_MOC_LITERAL(21, 237, 5), // "timeV"
+QT_MOC_LITERAL(22, 243, 15) // "attendNewClient"
 
     },
     "MainWindow\0videoDataReady\0\0depthDataReady\0"
-    "barreDataReady\0barreInit\0updateKinect\0"
+    "barridoDataReady\0barridoInit\0updateKinect\0"
     "init\0setServerIp\0putKcombo\0startK\0"
     "indexK\0stopK\0loop\0stoploop\0on_pbGo_clicked\0"
     "on_pbStop_clicked\0on_combo_activated\0"
@@ -126,8 +126,8 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         switch (_id) {
         case 0: _t->videoDataReady(); break;
         case 1: _t->depthDataReady(); break;
-        case 2: _t->barreDataReady(); break;
-        case 3: _t->barreInit(); break;
+        case 2: _t->barridoDataReady(); break;
+        case 3: _t->barridoInit(); break;
         case 4: _t->updateKinect(); break;
         case 5: _t->init(); break;
         case 6: _t->setServerIp(); break;

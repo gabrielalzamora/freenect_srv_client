@@ -21,7 +21,7 @@ public:
     void getAll(std::vector<point3c> &buffer3,std::vector<uint32_t> &bufferB);
     int get3d(std::vector<point3c> &buffer);
     int get2(std::vector<point2> &buffer);
-    int getBarrer(std::vector<uint32_t> &buffer);
+    int getBarrido(std::vector<uint32_t> &buffer);///Barre o Barrido para todo; pero para de poner variantes
 
 private:
     std::mutex m_rgb_mutex;///< mutex to ensure video frame data save access

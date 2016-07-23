@@ -28,14 +28,11 @@ signals:
 
 
 public slots:
-    void videoDataReady();
-    void depthDataReady();
-    void barreDataReady();
-    void barreInit();
-    //void p3dDataReady(std::vector<point3c>);//mira como se hace FRAME.h
-    //void setSrvKinect(SrvKinect sK);
-    //void setLed(int led_Status);
-    void updateKinect();
+    void videoDataReady();//print videoBuf
+    void depthDataReady();//print depthBuf
+    void barridoDataReady();//print BarridoBuf
+    void barridoInit();//paint axes
+    void updateKinect();//send ledOption and angle to kinect
 
 private slots:
     void init();
@@ -68,10 +65,10 @@ private:
     std::vector<QGraphicsEllipseItem*> ellipseVector;
     QPainter *ptpt;
 
-    Data *data;///< object that contain all configuration data from tab: data
-    srvKinect srvK ;///< struct holding datos sended by last client to reset datos
+//    Data *data;///< object that contain all configuration data from tab: data
+    srvKinect mw_srvK;///copy of data->m_srvK just to debug connect(data,this) problems-----DEBUG
 
-    freenect_context *context;///< point to usb context asociated to kinect data handling
+    freenect_context *context;///< point to usb context associated to kinect data handling
     Freenect::Freenect freenect;///< Freenect class object to start events thread and Devices
     Apikinect *device;
 
@@ -79,7 +76,7 @@ private:
     std::vector<uint16_t> depthBuf;///< container of depth info from kinect
     std::vector<point3c> p3Buf;///< container of points cloud <- video+depth
     std::vector<point2> p2Buf;///< container of 2D points = (point cloud) - color - z
-    std::vector<uint32_t> barreBuf;///< barreBuf contains distance on angle (360-i)/2 degrees, xOz plane
+    std::vector<uint32_t> barridoBuf;///< barridoBuf contains distance on angle (360-i)/2 degrees, xOz plane
     int flag;///< 0 stop loop(), otherwise let loop() run
     int numDevices;///< number of detected kinects
     int currentDeviceIndex;///< index of active kinect
