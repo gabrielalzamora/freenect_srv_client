@@ -1,6 +1,7 @@
 #ifndef DATOS_H
 #define DATOS_H
 
+#include <cstdint>
 #include <QWidget>
 #include <QGroupBox>
 #include <QRadioButton>

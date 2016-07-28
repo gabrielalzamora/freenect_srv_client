@@ -12,10 +12,10 @@ MAKEFILE      = Makefile
 
 CC            = gcc
 CXX           = g++
-DEFINES       = -DQT_QML_DEBUG -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
+DEFINES       = -DQT_QML_DEBUG -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_NETWORK_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -g -Wall -W -D_REENTRANT -fPIC $(DEFINES)
-CXXFLAGS      = -pipe -g -Wall -W -D_REENTRANT -fPIC $(DEFINES)
-INCPATH       = -I../a_client -I. -I../../accesorios/Qt/5.5/gcc_64/include -I../../accesorios/Qt/5.5/gcc_64/include/QtOpenGL -I../../accesorios/Qt/5.5/gcc_64/include/QtWidgets -I../../accesorios/Qt/5.5/gcc_64/include/QtGui -I../../accesorios/Qt/5.5/gcc_64/include/QtCore -I. -I. -I../../accesorios/Qt/5.5/gcc_64/mkspecs/linux-g++
+CXXFLAGS      = -pipe -std=gnu++11 -g -Wall -W -D_REENTRANT -fPIC $(DEFINES)
+INCPATH       = -I../a_client -I. -I../../accesorios/Qt/5.5/gcc_64/include -I../../accesorios/Qt/5.5/gcc_64/include/QtOpenGL -I../../accesorios/Qt/5.5/gcc_64/include/QtWidgets -I../../accesorios/Qt/5.5/gcc_64/include/QtGui -I../../accesorios/Qt/5.5/gcc_64/include/QtNetwork -I../../accesorios/Qt/5.5/gcc_64/include/QtCore -I. -I. -I../../accesorios/Qt/5.5/gcc_64/mkspecs/linux-g++
 QMAKE         = /home/nadie/accesorios/Qt/5.5/gcc_64/bin/qmake
 DEL_FILE      = rm -f
 CHK_DIR_EXISTS= test -d
@@ -36,7 +36,7 @@ DISTNAME      = a_client1.0.0
 DISTDIR = /home/nadie/apikinect/a_client-Debug/.tmp/a_client1.0.0
 LINK          = g++
 LFLAGS        = -Wl,-rpath,/home/nadie/accesorios/Qt/5.5/gcc_64 -Wl,-rpath,/home/nadie/accesorios/Qt/5.5/gcc_64/lib
-LIBS          = $(SUBLIBS) -L/home/nadie/accesorios/Qt/5.5/gcc_64/lib -lQt5OpenGL -L/usr/lib64 -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread 
+LIBS          = $(SUBLIBS) -L/home/nadie/accesorios/Qt/5.5/gcc_64/lib -lQt5OpenGL -L/usr/lib64 -lQt5Widgets -lQt5Gui -lQt5Network -lQt5Core -lGL -lpthread 
 AR            = ar cqs
 RANLIB        = 
 SED           = sed
@@ -49,10 +49,14 @@ OBJECTS_DIR   = ./
 ####### Files
 
 SOURCES       = ../a_client/main.cpp \
-		../a_client/mainwindow.cpp moc_mainwindow.cpp
+		../a_client/mainwindow.cpp \
+		../a_client/data.cpp moc_mainwindow.cpp \
+		moc_data.cpp
 OBJECTS       = main.o \
 		mainwindow.o \
-		moc_mainwindow.o
+		data.o \
+		moc_mainwindow.o \
+		moc_data.o
 DIST          = ../../accesorios/Qt/5.5/gcc_64/mkspecs/features/spec_pre.prf \
 		../../accesorios/Qt/5.5/gcc_64/mkspecs/common/unix.conf \
 		../../accesorios/Qt/5.5/gcc_64/mkspecs/common/linux.conf \
@@ -188,8 +192,10 @@ DIST          = ../../accesorios/Qt/5.5/gcc_64/mkspecs/features/spec_pre.prf \
 		../../accesorios/Qt/5.5/gcc_64/mkspecs/features/exceptions.prf \
 		../../accesorios/Qt/5.5/gcc_64/mkspecs/features/yacc.prf \
 		../../accesorios/Qt/5.5/gcc_64/mkspecs/features/lex.prf \
-		../a_client/a_client.pro ../a_client/mainwindow.h ../a_client/main.cpp \
-		../a_client/mainwindow.cpp
+		../a_client/a_client.pro ../a_client/mainwindow.h \
+		../a_client/data.h ../a_client/main.cpp \
+		../a_client/mainwindow.cpp \
+		../a_client/data.cpp
 QMAKE_TARGET  = a_client
 DESTDIR       = #avoid trailing-slash linebreak
 TARGET        = a_client
@@ -359,6 +365,7 @@ Makefile: ../a_client/a_client.pro ../../accesorios/Qt/5.5/gcc_64/mkspecs/linux-
 		/home/nadie/accesorios/Qt/5.5/gcc_64/lib/libQt5OpenGL.prl \
 		/home/nadie/accesorios/Qt/5.5/gcc_64/lib/libQt5Widgets.prl \
 		/home/nadie/accesorios/Qt/5.5/gcc_64/lib/libQt5Gui.prl \
+		/home/nadie/accesorios/Qt/5.5/gcc_64/lib/libQt5Network.prl \
 		/home/nadie/accesorios/Qt/5.5/gcc_64/lib/libQt5Core.prl
 	$(QMAKE) -spec linux-g++ CONFIG+=debug CONFIG+=qml_debug -o Makefile ../a_client/a_client.pro
 ../../accesorios/Qt/5.5/gcc_64/mkspecs/features/spec_pre.prf:
@@ -500,6 +507,7 @@ Makefile: ../a_client/a_client.pro ../../accesorios/Qt/5.5/gcc_64/mkspecs/linux-
 /home/nadie/accesorios/Qt/5.5/gcc_64/lib/libQt5OpenGL.prl:
 /home/nadie/accesorios/Qt/5.5/gcc_64/lib/libQt5Widgets.prl:
 /home/nadie/accesorios/Qt/5.5/gcc_64/lib/libQt5Gui.prl:
+/home/nadie/accesorios/Qt/5.5/gcc_64/lib/libQt5Network.prl:
 /home/nadie/accesorios/Qt/5.5/gcc_64/lib/libQt5Core.prl:
 qmake: FORCE
 	@$(QMAKE) -spec linux-g++ CONFIG+=debug CONFIG+=qml_debug -o Makefile ../a_client/a_client.pro
@@ -515,8 +523,8 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
-	$(COPY_FILE) --parents ../a_client/mainwindow.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../a_client/main.cpp ../a_client/mainwindow.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../a_client/mainwindow.h ../a_client/data.h $(DISTDIR)/
+	$(COPY_FILE) --parents ../a_client/main.cpp ../a_client/mainwindow.cpp ../a_client/data.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../a_client/mainwindow.ui $(DISTDIR)/
 
 
@@ -540,9 +548,9 @@ check: first
 
 compiler_rcc_make_all:
 compiler_rcc_clean:
-compiler_moc_header_make_all: moc_mainwindow.cpp
+compiler_moc_header_make_all: moc_mainwindow.cpp moc_data.cpp
 compiler_moc_header_clean:
-	-$(DEL_FILE) moc_mainwindow.cpp
+	-$(DEL_FILE) moc_mainwindow.cpp moc_data.cpp
 moc_mainwindow.cpp: ../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QMainWindow \
 		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qmainwindow.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qwidget.h \
@@ -648,15 +656,280 @@ moc_mainwindow.cpp: ../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QMainWindow
 		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtouchdevice.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qicon.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtNetwork/QTcpSocket \
+		../../accesorios/Qt/5.5/gcc_64/include/QtNetwork/qtcpsocket.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtNetwork/qabstractsocket.h \
 		../a_client/mainwindow.h
-	/home/nadie/accesorios/Qt/5.5/gcc_64/bin/moc $(DEFINES) -I/home/nadie/accesorios/Qt/5.5/gcc_64/mkspecs/linux-g++ -I/home/nadie/apikinect/a_client -I/home/nadie/accesorios/Qt/5.5/gcc_64/include -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtOpenGL -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtWidgets -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtGui -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtCore -I. ../a_client/mainwindow.h -o moc_mainwindow.cpp
+	/home/nadie/accesorios/Qt/5.5/gcc_64/bin/moc $(DEFINES) -I/home/nadie/accesorios/Qt/5.5/gcc_64/mkspecs/linux-g++ -I/home/nadie/apikinect/a_client -I/home/nadie/accesorios/Qt/5.5/gcc_64/include -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtOpenGL -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtWidgets -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtGui -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtNetwork -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtCore -I. ../a_client/mainwindow.h -o moc_mainwindow.cpp
+
+moc_data.cpp: ../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QWidget \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qwidget.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qwindowdefs.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qglobal.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qconfig.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qfeatures.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsystemdetection.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qprocessordetection.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcompilerdetection.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qtypeinfo.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qtypetraits.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsysinfo.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qlogging.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qflags.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qbasicatomic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qgenericatomic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_cxx11.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_gcc.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_msvc.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_armv7.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_armv6.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_armv5.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_ia64.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_mips.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_x86.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_unix.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qglobalstatic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmutex.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qnumeric.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobjectdefs.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qnamespace.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qwindowdefs_win.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobject.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstring.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qchar.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qbytearray.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qrefcount.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qarraydata.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstringbuilder.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qlist.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qalgorithms.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qiterator.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qbytearraylist.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstringlist.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qregexp.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstringmatcher.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcoreevent.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qscopedpointer.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmetatype.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qvarlengtharray.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcontainerfwd.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qisenum.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobject_impl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmargins.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpaintdevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qrect.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsize.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qpoint.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpalette.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qcolor.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qrgb.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qbrush.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qpair.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qvector.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qmatrix.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpolygon.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qregion.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qdatastream.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qiodevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qline.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtransform.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpainterpath.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qimage.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpixelformat.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpixmap.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsharedpointer.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qshareddata.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qhash.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsharedpointer_impl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qfont.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qfontmetrics.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qfontinfo.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qsizepolicy.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qcursor.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qkeysequence.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qevent.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qvariant.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmap.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qdebug.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qtextstream.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qlocale.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qset.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcontiguouscache.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qurl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qurlquery.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qfile.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qfiledevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qvector2d.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtouchdevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QGroupBox \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qgroupbox.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qframe.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QRadioButton \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qradiobutton.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractbutton.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qicon.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QCheckBox \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qcheckbox.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLineEdit \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlineedit.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextcursor.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextformat.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpen.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextoption.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QSlider \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qslider.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLabel \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlabel.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLayout \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlayout.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qgridlayout.h \
+		../a_client/data.h
+	/home/nadie/accesorios/Qt/5.5/gcc_64/bin/moc $(DEFINES) -I/home/nadie/accesorios/Qt/5.5/gcc_64/mkspecs/linux-g++ -I/home/nadie/apikinect/a_client -I/home/nadie/accesorios/Qt/5.5/gcc_64/include -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtOpenGL -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtWidgets -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtGui -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtNetwork -I/home/nadie/accesorios/Qt/5.5/gcc_64/include/QtCore -I. ../a_client/data.h -o moc_data.cpp
 
 compiler_moc_source_make_all:
 compiler_moc_source_clean:
 compiler_uic_make_all: ui_mainwindow.h
 compiler_uic_clean:
 	-$(DEL_FILE) ui_mainwindow.h
-ui_mainwindow.h: ../a_client/mainwindow.ui
+ui_mainwindow.h: ../a_client/mainwindow.ui \
+		../a_client/data.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QWidget \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qwidget.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qwindowdefs.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qglobal.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qconfig.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qfeatures.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsystemdetection.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qprocessordetection.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcompilerdetection.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qtypeinfo.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qtypetraits.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsysinfo.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qlogging.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qflags.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qbasicatomic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qgenericatomic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_cxx11.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_gcc.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_msvc.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_armv7.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_armv6.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_armv5.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_ia64.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_mips.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_x86.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_unix.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qglobalstatic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmutex.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qnumeric.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobjectdefs.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qnamespace.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qwindowdefs_win.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobject.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstring.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qchar.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qbytearray.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qrefcount.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qarraydata.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstringbuilder.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qlist.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qalgorithms.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qiterator.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qbytearraylist.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstringlist.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qregexp.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstringmatcher.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcoreevent.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qscopedpointer.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmetatype.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qvarlengtharray.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcontainerfwd.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qisenum.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobject_impl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmargins.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpaintdevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qrect.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsize.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qpoint.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpalette.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qcolor.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qrgb.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qbrush.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qpair.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qvector.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qmatrix.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpolygon.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qregion.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qdatastream.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qiodevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qline.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtransform.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpainterpath.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qimage.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpixelformat.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpixmap.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsharedpointer.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qshareddata.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qhash.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsharedpointer_impl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qfont.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qfontmetrics.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qfontinfo.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qsizepolicy.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qcursor.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qkeysequence.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qevent.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qvariant.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmap.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qdebug.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qtextstream.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qlocale.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qset.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcontiguouscache.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qurl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qurlquery.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qfile.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qfiledevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qvector2d.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtouchdevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QGroupBox \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qgroupbox.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qframe.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QRadioButton \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qradiobutton.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractbutton.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qicon.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QCheckBox \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qcheckbox.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLineEdit \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlineedit.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextcursor.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextformat.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpen.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextoption.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QSlider \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qslider.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLabel \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlabel.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLayout \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlayout.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qgridlayout.h
 	/home/nadie/accesorios/Qt/5.5/gcc_64/bin/uic ../a_client/mainwindow.ui -o ui_mainwindow.h
 
 compiler_yacc_decl_make_all:
@@ -775,6 +1048,9 @@ main.o: ../a_client/main.cpp ../a_client/mainwindow.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtouchdevice.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qicon.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtNetwork/QTcpSocket \
+		../../accesorios/Qt/5.5/gcc_64/include/QtNetwork/qtcpsocket.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtNetwork/qabstractsocket.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QApplication \
 		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qapplication.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcoreapplication.h \
@@ -890,11 +1166,233 @@ mainwindow.o: ../a_client/mainwindow.cpp ../a_client/mainwindow.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtouchdevice.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qtabwidget.h \
 		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qicon.h \
-		ui_mainwindow.h
+		../../accesorios/Qt/5.5/gcc_64/include/QtNetwork/QTcpSocket \
+		../../accesorios/Qt/5.5/gcc_64/include/QtNetwork/qtcpsocket.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtNetwork/qabstractsocket.h \
+		ui_mainwindow.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/QVariant \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QAction \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qaction.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qactiongroup.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QApplication \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qapplication.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcoreapplication.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qeventloop.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qdesktopwidget.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qguiapplication.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qinputmethod.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QGraphicsView \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qgraphicsview.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpainter.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextoption.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpen.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qscrollarea.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractscrollarea.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qframe.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qgraphicsscene.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QGridLayout \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qgridlayout.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlayout.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QHBoxLayout \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QHeaderView \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qheaderview.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractitemview.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qabstractitemmodel.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qitemselectionmodel.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractitemdelegate.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qstyleoption.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractspinbox.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qvalidator.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qregularexpression.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qslider.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qstyle.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qtabbar.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qrubberband.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLabel \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlabel.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLineEdit \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlineedit.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextcursor.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextformat.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QMenuBar \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qmenubar.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qmenu.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QOpenGLWidget \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qopenglwidget.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QWidget \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/QSurfaceFormat \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qsurfaceformat.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qopengl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qt_windows.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qopengles2ext.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qopenglext.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QPushButton \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qpushbutton.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractbutton.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QSpacerItem \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QStatusBar \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qstatusbar.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QTabWidget \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QTextBrowser \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qtextbrowser.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qtextedit.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextdocument.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QToolBar \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qtoolbar.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QVBoxLayout \
+		../a_client/data.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QGroupBox \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qgroupbox.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QRadioButton \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qradiobutton.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QCheckBox \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qcheckbox.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QSlider \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLayout
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../a_client/mainwindow.cpp
+
+data.o: ../a_client/data.cpp ../a_client/data.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QWidget \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qwidget.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qwindowdefs.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qglobal.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qconfig.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qfeatures.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsystemdetection.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qprocessordetection.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcompilerdetection.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qtypeinfo.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qtypetraits.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsysinfo.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qlogging.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qflags.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qbasicatomic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_bootstrap.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qgenericatomic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_cxx11.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_gcc.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_msvc.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_armv7.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_armv6.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_armv5.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_ia64.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_mips.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_x86.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qatomic_unix.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qglobalstatic.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmutex.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qnumeric.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobjectdefs.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qnamespace.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobjectdefs_impl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qwindowdefs_win.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobject.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstring.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qchar.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qbytearray.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qrefcount.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qarraydata.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstringbuilder.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qlist.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qalgorithms.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qiterator.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qbytearraylist.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstringlist.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qregexp.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qstringmatcher.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcoreevent.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qscopedpointer.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmetatype.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qvarlengtharray.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcontainerfwd.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qisenum.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qobject_impl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmargins.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpaintdevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qrect.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsize.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qpoint.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpalette.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qcolor.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qrgb.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qbrush.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qpair.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qvector.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qmatrix.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpolygon.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qregion.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qdatastream.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qiodevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qline.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtransform.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpainterpath.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qimage.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpixelformat.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpixmap.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsharedpointer.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qshareddata.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qhash.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qsharedpointer_impl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qfont.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qfontmetrics.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qfontinfo.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qsizepolicy.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qcursor.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qkeysequence.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qevent.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qvariant.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qmap.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qdebug.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qtextstream.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qlocale.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qset.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qcontiguouscache.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qurl.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qurlquery.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qfile.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtCore/qfiledevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qvector2d.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtouchdevice.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QGroupBox \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qgroupbox.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qframe.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QRadioButton \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qradiobutton.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractbutton.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qicon.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QButtonGroup \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qbuttongroup.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QCheckBox \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qcheckbox.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLineEdit \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlineedit.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextcursor.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextformat.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qpen.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtGui/qtextoption.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QSlider \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qslider.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qabstractslider.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLabel \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlabel.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/QLayout \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlayout.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qlayoutitem.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qboxlayout.h \
+		../../accesorios/Qt/5.5/gcc_64/include/QtWidgets/qgridlayout.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o data.o ../a_client/data.cpp
 
 moc_mainwindow.o: moc_mainwindow.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_mainwindow.o moc_mainwindow.cpp
+
+moc_data.o: moc_data.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_data.o moc_data.cpp
 
 ####### Install
 

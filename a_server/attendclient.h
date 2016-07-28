@@ -1,13 +1,77 @@
+
+
+
 #ifndef ATTENDCLIENT_H
 #define ATTENDCLIENT_H
 
 #include <QObject>
 #include <QTcpServer>
+#include <QTcpSocket>
+#include "data.h"
 
-class AttendClient : public QTcpServer
+class AttendClient : public QObject
 {
+    Q_OBJECT
 public:
-    AttendClient();
+    explicit AttendClient(QTcpSocket *socket, pBuf *ptrToBuffers, QObject *parent=0);
+    explicit AttendClient(QTcpSocket *socket, std::vector<uint8_t> &vectorVideo, QObject *parent=0);
+    ~AttendClient();
+
+signals:
+    void newSrvKinect(srvKinect newSrvK);
+
+public slots:
+    void startServers();
+    void readSrvKdata();
+
+    void incomingVideo();
+    void sendVideo();
+
+    void incomingDepth();
+    void sendDepth();
+    void incoming3d();
+    void send3d();
+    void incoming2d();
+    void send2d();
+    void incomingBarrido();
+    void sendBarrido();
+    void incomingAccel();
+    void sendAccel();
+
+private:
+    QTcpSocket *m_socket;///< as srvK socket
+    QHostAddress peerAddr;
+    quint16 peerPort;
+    pBuf structBuffers;
+
+    srvKinect srvK;
+
+    QTcpServer *s_video;
+    QTcpSocket *skt_video;
+    quint64 sizeVideo;
+    quint8 flagVideo;
+    QImage imgVideo;
+    std::vector<uint8_t> m_vectorVideo;
+
+    QTcpServer *s_depth;
+    QTcpSocket *skt_depth;
+    quint64 sizeDepth;
+
+    QTcpServer *s_3d;
+    QTcpSocket *skt_3d;
+    quint64 size3d;
+
+    QTcpServer *s_2d;
+    QTcpSocket *skt_2d;
+    quint64 size2d;
+
+    QTcpServer *s_barrido;
+    QTcpSocket *skt_barrido;
+    quint64 sizeBarrido;
+
+    QTcpServer *s_accel;
+    QTcpSocket *skt_accel;
+    quint64 sizeAccel;
 };
 
 #endif // ATTENDCLIENT_H

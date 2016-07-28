@@ -5,6 +5,8 @@
 #include "ui_mainwindow.h"
 #include "apikinect.h"
 
+#define SRVKPORT 10003
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -13,9 +15,10 @@ MainWindow::MainWindow(QWidget *parent) :
     numDevices = freenect.deviceCount();
 
     init();
+    startServer();
     setServerIp();
     putKcombo();
-    barridoInit();
+    barridoInit();//paint axes on barrido view
 
     connect(ui->tab_2,SIGNAL(dataChanged()),this,SLOT(updateKinect()));
     connect(ui->tab_2,SIGNAL(ledOptionChanged()),this,SLOT(updateKinect()));
@@ -23,11 +26,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-    if(currentDeviceIndex !=-1){
+/*    if(currentDeviceIndex !=-1){
         stoploop();
         stopK(currentDeviceIndex);
     }
-
+*/
     delete sceneVideo;
     delete sceneDepth;
     delete sceneBarre;
@@ -122,11 +125,44 @@ void MainWindow::updateKinect()
     }
 }
 /**
+ * @brief MainWindow::updateSrvKinect
+ * set srvKinect data sended by client
+ * @param sk
+ * [in] client current srvKinect
+ */
+void MainWindow::updateSrvKinect(srvKinect newSrvK)
+{
+    ui->tab_2->m_srvK.m_fAngulo = newSrvK.m_fAngulo;
+    ui->tab_2->m_srvK.m_iAnguloKinect = newSrvK.m_iAnguloKinect;
+    ui->tab_2->m_srvK.m_fAltura = newSrvK.m_fAltura;
+    ui->tab_2->m_srvK.m_fYMin = newSrvK.m_fYMin;
+    ui->tab_2->m_srvK.m_fYMax = newSrvK.m_fYMax;
+    ui->tab_2->m_srvK.m_fZMax = newSrvK.m_fZMax;
+    ui->tab_2->m_srvK.m_ulRefresco3D = newSrvK.m_ulRefresco3D;
+    ui->tab_2->m_srvK.m_usModulo3D = newSrvK.m_usModulo3D;
+    ui->tab_2->m_srvK.m_bEnvio3D = newSrvK.m_bEnvio3D;
+    ui->tab_2->m_srvK.m_bEnvio2D = newSrvK.m_bEnvio2D;
+    ui->tab_2->m_srvK.m_bEnvioBarrido = newSrvK.m_bEnvioBarrido;
+    ui->tab_2->m_srvK.m_bCompress3D = newSrvK.m_bCompress3D;
+    ui->tab_2->m_srvK.m_iBarridoEcu = newSrvK.m_iBarridoEcu;
+    ui->tab_2->m_srvK.m_iBarridoYMin = newSrvK.m_iBarridoYMin;
+    ui->tab_2->m_srvK.m_iBarridoYMax = newSrvK.m_iBarridoYMax;
+    ui->tab_2->m_srvK.m_ulRefrescoDepth = newSrvK.m_ulRefrescoDepth;
+    ui->tab_2->m_srvK.m_bEnvioDepth = newSrvK.m_bEnvioDepth;
+    ui->tab_2->m_srvK.m_bCompressDepth = newSrvK.m_bCompressDepth;
+    ui->tab_2->m_srvK.m_ulRefrescoColor = newSrvK.m_ulRefrescoColor;
+    ui->tab_2->m_srvK.m_bEnvioColor = newSrvK.m_bEnvioColor;
+    ui->tab_2->m_srvK.m_bCompressColor = newSrvK.m_bCompressColor;
+
+}
+
+/**
  * @brief MainWindow::init
  * convenience function to initiate members
  */
 void MainWindow::init()
 {
+    //apikinect
     device = NULL;
     currentDeviceIndex = -1;
     flag = false;
@@ -134,7 +170,16 @@ void MainWindow::init()
     depthBuf.resize(640*480);
     p3Buf.reserve(300000);//max number of points
     p3Buf.resize(0);//initially we have none
+    p2Buf.reserve(300000);
+    p2Buf.resize(0);
     barridoBuf.resize(360);
+    accel.resize(3);
+    ptrToBuffers.ptrVideoBuf = &videoBuf;
+    ptrToBuffers.ptrDepthBuf = &depthBuf;
+    ptrToBuffers.ptrP3Buf = &p3Buf;
+    ptrToBuffers.ptrP2Buf = &p2Buf;
+    ptrToBuffers.ptrBarridoBuf = &barridoBuf;
+    ptrToBuffers.ptrAccel = &accel;
     ellipseVector.reserve(360);
     ellipseVector.resize(0);
     sceneVideo = new QGraphicsScene;
@@ -147,6 +192,8 @@ void MainWindow::init()
     ui->gvDepth->setScene(sceneDepth);
     ui->gvBarre->setScene(sceneBarre);
     timeVector.resize(6);
+    //server
+    mainServer = new QTcpServer(this);
 }
 /**
  * @brief MainWindow::setServerIp
@@ -187,6 +234,7 @@ void MainWindow::putKcombo()
         ui->textEdit->setText(" Select kinect in combo box to start\n1-click combo\n2-click device number in combo\n3-click Go");
     }
 }
+
 /**
  * @brief MainWindow::startK
  * init device to handle kinect of indexK
@@ -281,6 +329,37 @@ void MainWindow::stoploop()
     flag = 0;
 }
 /**
+ * @brief MainWindow::printTimeVector
+ * aux function to control time spend in calculus or painting
+ * @param timeV
+ * vector to save data
+ */
+void MainWindow::printTimeVector(std::vector<int> &timeV)
+{
+    QString str,aux;
+    str = "get video = ";
+    aux.setNum(timeV[0]);
+    str.append(aux);
+    aux = " \nget depth = ";
+    str.append(aux);
+    aux.setNum(timeV[1]);
+    str.append(aux);
+    aux = " \nget buffer = ";
+    str.append(aux);
+    aux.setNum(timeV[2]);
+    str.append(aux);
+    aux = "\npinta3D = ";
+    str.append(aux);
+    aux.setNum(timeV[3]);
+    str.append(aux);
+    aux = "\npintaB = ";
+    str.append(aux);
+    aux.setNum(timeV[4]);
+    str.append(aux);
+    ui->textEdit->setText(str);
+}
+
+/**
  * @brief MainWindow::on_pbGo_clicked start selected kinect data flow
  */
 void MainWindow::on_pbGo_clicked()
@@ -325,42 +404,39 @@ void MainWindow::on_combo_activated(const QString &arg1)
         ui->textEdit->setText(" First stop running kinect, then start the other.");
     }
 }
+
 /**
- * @brief MainWindow::printTimeVector
- * aux function to control time spend in calculus or painting
- * @param timeV
+ * @brief MainWindow::startServer
+ * start QTcpServer listening at port 9999 and connect to attendNewClient()
  */
-void MainWindow::printTimeVector(std::vector<int> &timeV)
+void MainWindow::startServer()
 {
-    QString str,aux;
-    str = "get video = ";
-    aux.setNum(timeV[0]);
-    str.append(aux);
-    aux = " \nget depth = ";
-    str.append(aux);
-    aux.setNum(timeV[1]);
-    str.append(aux);
-    aux = " \nget buffer = ";
-    str.append(aux);
-    aux.setNum(timeV[2]);
-    str.append(aux);
-    aux = "\npinta3D = ";
-    str.append(aux);
-    aux.setNum(timeV[3]);
-    str.append(aux);
-    aux = "\npintaB = ";
-    str.append(aux);
-    aux.setNum(timeV[4]);
-    str.append(aux);
-    ui->textEdit->setText(str);
+    if( !mainServer->listen(QHostAddress::Any,SRVKPORT) ){
+        ui->textEdit->setText(mainServer->errorString());
+        mainServer->close();
+        return;
+    }
+
+    connect(mainServer, SIGNAL(newConnection()), this, SLOT(attendNewClient()));
+}
+/**
+ * @brief MainWindow::attendNewClient
+ * when client connection incoming create a new AttendClient and bind
+ */
+void MainWindow::attendNewClient()///------test with concurrent clients----------DEBUG
+{
+    qDebug("MainWindow::startServer");
+    attendant = new AttendClient(mainServer->nextPendingConnection(),&ptrToBuffers,this);
+//    attendant = new AttendClient(mainServer->nextPendingConnection(),videoBuf,this);//----DEBUG
+
+    if( attendant == NULL ) ui->textEdit->setText("BAD_ALLOC  AttendClient");
+    attendClients.push_back(attendant);
+/*    connect(attendClients[attendClients.size()-1],SIGNAL(newSrvKinect(srvKinect newSrvK)),
+                                             this,SLOT(updateSrvKinect(srvKinect)));
+*/
+    connect(attendant,SIGNAL(newSrvKinect(srvKinect newSrvK)),this,SLOT(updateSrvKinect(srvKinect)));
 }
 
-void MainWindow::attendNewClient()
-{
-
-}
-
-// Al parecer pasa por ~MainWindow al cerrar ¿por qué se queja a veces?
 /**
  * @brief MainWindow::closeEvent
  * override window close event to stop loop and delete apikinect handler
@@ -369,5 +445,5 @@ void MainWindow::attendNewClient()
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     this->~MainWindow();
-    exit(0);
+    //exit(0);
 }
