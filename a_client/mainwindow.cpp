@@ -30,8 +30,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->gviewVideo->setScene(sceneVideo);
     itemVideo = NULL;
 
-    //s_depth = ...
-    //connectedDepth = 0;
+    skt_depth = new QTcpSocket(this);
+    connectedDepth = 0;
+    sizeDepth = 0;
+    sceneDepth = new QGraphicsScene(this);
+    ui->gviewDepth->setScene(sceneDepth);
+    itemDepth = NULL;
     //depthImg = QImage(W,H,QImage::Format_RGB16);
 
 //    connect(ui->lineEdit,SIGNAL(editingFinished()),this,SLOT(setHost()));
@@ -40,11 +44,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->pbGo,SIGNAL(released()),this,SLOT(initConnection()));
     connect(ui->pbStop,SIGNAL(released()),this,SLOT(closeConnection()));
 //    connect(ui->tab_2,SIGNAL(srvKChanged(srvKinect)),this,SLOT(sendNewSrvK(srvKinect)));
-//    connect(ui->tab_2,SIGNAL(dataChanged()),this,SLOT(sendNewData()));
-//    connect(ui->tab_2,SIGNAL(ledOptionChanged()),this,SLOT(sendNewData()));
+    connect(ui->tab_2,SIGNAL(dataChanged()),this,SLOT(dataChanged()));
+    connect(ui->tab_2,SIGNAL(ledOptionChanged()),this,SLOT(dataChanged()));
     connect(ui->pbVideo,SIGNAL(released()),this,SLOT(initVideo()));
     connect(skt_video,SIGNAL(readyRead()),this,SLOT(readDataVideo()));
-
+    connect(skt_depth,SIGNAL(readyRead()),this,SLOT(readDataDepth()));
 }
 
 MainWindow::~MainWindow()
@@ -52,7 +56,7 @@ MainWindow::~MainWindow()
     delete ui;
     delete skt_srvK;
     delete skt_video;
-    //delete s_depth;
+    delete skt_depth;
     //...
 }
 
@@ -62,20 +66,52 @@ MainWindow::~MainWindow()
  */
 void MainWindow::setHost()
 {
-    ui->lineEdit->setText("192.168.1.3");///-----------------DEBUG
+//    ui->lineEdit->setText("192.168.1.34");///-----------------DEBUG
+//    ui->lineEdit->setText("192.168.0.157");///-----------------DEBUG
+    ui->lineEdit->setText("127.0.0.1");///-----------------DEBUG
     hostAddr = QHostAddress(ui->lineEdit->text());
+//    ui->textBrowser->setText(ui->lineEdit->text());
     ui->pbGo->setEnabled(true);
 }
 
+/**
+ * @brief MainWindow::dataChanged
+ */
 void MainWindow::dataChanged()
 {
+    qDebug("MainClient::dataChanged");
 
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(1);
+    out << ui->tab_2->m_srvK.m_fAngulo;
+    out << ui->tab_2->m_srvK.m_iAnguloKinect;
+    out << ui->tab_2->m_srvK.m_fAltura;
+    out << ui->tab_2->m_srvK.m_fYMin;
+    out << ui->tab_2->m_srvK.m_fYMax;
+    out << ui->tab_2->m_srvK.m_fZMax;
+    out << ui->tab_2->m_srvK.m_ulRefresco3D;
+    out << ui->tab_2->m_srvK.m_usModulo3D;
+    out << ui->tab_2->m_srvK.m_bEnvio3D;
+    out << ui->tab_2->m_srvK.m_bEnvio2D;
+    out << ui->tab_2->m_srvK.m_bEnvioBarrido;
+    out << ui->tab_2->m_srvK.m_bCompress3D;
+    out << ui->tab_2->m_srvK.m_iBarridoEcu;
+    out << ui->tab_2->m_srvK.m_iBarridoYMin;
+    out << ui->tab_2->m_srvK.m_iBarridoYMax;
+    out << ui->tab_2->m_srvK.m_ulRefrescoDepth;
+    out << ui->tab_2->m_srvK.m_bEnvioDepth;
+    out << ui->tab_2->m_srvK.m_bCompressDepth;
+    out << ui->tab_2->m_srvK.m_ulRefrescoColor;
+    out << ui->tab_2->m_srvK.m_bEnvioColor;
+    out << ui->tab_2->m_srvK.m_bCompressColor;
+    out.device()->seek(0);
+    out << quint64(buff.size() - sizeof(quint64));
+    skt_srvK->write(buff);
+    qDebug("  init tamaño enviado: %u", (buff.size()-sizeof(quint64)));//DEBUG
 }
 
-void MainWindow::sendNewSrvK(srvKinect newSrvK)
-{
-
-}
 
 /**
  * @brief MainWindow::initConnection
@@ -114,7 +150,9 @@ void MainWindow::closeConnection()
     if(connectedVideo){///---------recuerda desconectar lo demás cuando esté-------DEBUG
         finalizeVideo();
     }
-    //if(connectedDepth){ s_depth->disconnectFromHost();connectedDepth = 0;}
+    if(connectedDepth){
+        finalizeDepth();
+    }
     //...
 
     ui->pbGo->setEnabled(true);
@@ -122,12 +160,17 @@ void MainWindow::closeConnection()
     //close();
 }
 
+void MainWindow::socketErrorVideo()
+{
+
+}
+
 /**
  * @brief MainWindow::initVideo
  * start video connection to server
  * clicked twice stops video
  */
-void MainWindow::initVideo()///------------DEBUG
+void MainWindow::initVideo()
 {
     qDebug("MainClient::initVideo");
     if( connectedVideo ){//second click disconnects
@@ -146,7 +189,7 @@ void MainWindow::initVideo()///------------DEBUG
         qDebug("  client VIDEO connected = %d",connectedVideo);
     }
     //---------------------------request 1st image to server
-    QByteArray buff;///-----------------------------pasa de QByteArray socket.write()
+    QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(1);
@@ -155,7 +198,6 @@ void MainWindow::initVideo()///------------DEBUG
     skt_video->write(buff);
     qDebug("  init tamaño enviado: %u", (buff.size()-sizeof(quint64)));//DEBUG
 }
-
 /**
  * @brief MainWindow::finalizeVideo
  * stop video connection to server
@@ -178,12 +220,6 @@ void MainWindow::finalizeVideo()
     skt_video->disconnectFromHost();
     connectedVideo = 0;
 }
-
-void MainWindow::socketErrorVideo()
-{
-
-}
-
 /**
  * @brief MainWindow::readDataVideo
  * read video data and show on gui
@@ -228,22 +264,97 @@ void MainWindow::readDataVideo()
     sizeVideo = 0;//to allow get next img sizeVideo
 }
 
+/**
+ * @brief MainWindow::initDepth
+ * start depth connection to server
+ * clicked twice stops depth
+ */
 void MainWindow::initDepth()
 {
-
+    qDebug("MainClient::initDepth");
+    if( connectedDepth ){//second click disconnects
+        finalizeVideo();
+        ui->textBrowser->append("- depth cerrado ");
+    }else{
+        skt_depth->connectToHost(hostAddr,DEPTHPORT);
+        if( !skt_depth->waitForConnected(3000) ){
+            ui->textBrowser->setText(skt_depth->errorString());
+            qDebug("  client VIDEO connected = %d",connectedVideo);
+            return;
+        }
+        connect(skt_depth,SIGNAL(readyRead()),this,SLOT(readDataVideo()));
+        connectedDepth = 1;
+        ui->textBrowser->append("- depth connected");
+        qDebug("  client DEPTH connected = %d",connectedDepth);
+    }
+    //---------------------------request 1st image to server
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(1);
+    out.device()->seek(0);
+    out << quint64(buff.size() - sizeof(quint64));
+    skt_depth->write(buff);
+    qDebug("  init depth tamaño enviado: %u", (buff.size()-sizeof(quint64)));//DEBUG
 }
-
+/**
+ * @brief MainWindow::finalizeDepth
+ * stop depth connection to server
+ */
 void MainWindow::finalizeDepth()
 {
+    qDebug("MainClient::finalizeDepth");
+    //---------------------------request STOP server
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(0);
+    out.device()->seek(0);
+    out << quint64(buff.size() - sizeof(quint64));
 
+    qDebug("  tamaño antes enviado: %u", (buff.size()-sizeof(quint64)));//DEBUG
+
+    skt_depth->write(buff);//enviamos
+    //---------------------------sended image to client
+    skt_depth->disconnectFromHost();
+    connectedDepth = 0;
 }
-
-void MainWindow::socketErrorDepth()
-{
-
-}
-
+/**
+ * @brief MainWindow::readDataDepth
+ * read depth data and show on gui
+ */
 void MainWindow::readDataDepth()
 {
+    qDebug("MainClient::readDataDepth");
 
+    QDataStream ioStream(skt_depth);
+    ioStream.setVersion(QDataStream::Qt_5_0);
+
+    if(sizeDepth == 0){
+        if(skt_depth->bytesAvailable() < (int)sizeof(quint64))
+            return;//wait till sizeDepth completed-----or-------return
+        ioStream >> sizeDepth;
+        qDebug() << "  valor de size: " << sizeDepth << "\n";
+    }
+    if(skt_depth->bytesAvailable() < (sizeDepth-sizeof(quint64)))
+        return;//wait till all image data received
+
+    QImage image;
+    ioStream >> image;
+
+    sceneVideo->addPixmap(QPixmap::fromImage(image).scaled(320,240,Qt::KeepAspectRatio));
+    ui->gviewVideo->show();
+
+    //---------------------------request next image to server
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(1);
+    out.device()->seek(0);//puntero a inicio buff
+    out << quint64(buff.size() - sizeof(quint64));//escribimos tamaño buf al principio
+    skt_depth->write(buff);//enviamos
+
+    qDebug("  read tamaño enviado: %u", (buff.size()-sizeof(quint64)));//DEBUG
+
+    sizeDepth = 0;//to allow get next img sizeDepth
 }

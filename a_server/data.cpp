@@ -1,7 +1,20 @@
 
 #include "data.h"
+/*!
+  \class Data
+  \brief A class to handle configuration data
+  
+  Used to show parámeters and allow input actions from user
+  Used to allow update of server data with client data
+ */
 
-
+/*!
+ * \brief Data::Data
+ * constructor that show all buttons, sliders... and \
+ * connect changes on them to data update functions
+ * \param parent
+ * pointer to QWidget parent of Data
+ */
 Data::Data(QWidget *parent) : QWidget(parent)
 {
     //------------Start TAB LAYOUT-----------!!!!!!!!!
@@ -9,11 +22,11 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QLabel *DepthLabelrefresco = new QLabel(tr("refresco"));
         DepthSlider = new QSlider(Qt::Horizontal);
         DepthSlider->setTickPosition(QSlider::TicksBelow);
-        DepthSlider->setMinimum(0);
+        DepthSlider->setMinimum(1);
         DepthSlider->setMaximum(2000);
         DepthSlider->setSingleStep(200);
-        DepthSlider->setValue(1000);
-        QLabel *DepthLabelSlider = new QLabel;
+        DepthSlider->setValue(33);
+        DepthLabelSlider = new QLabel;
         DepthLabelSlider->setFixedWidth(40);
         QString strD;
         DepthLabelSlider->setText(strD.setNum(DepthSlider->sliderPosition()));
@@ -38,11 +51,11 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QLabel *VideoLabelrefresco = new QLabel(tr("refresco"));
         VideoSlider = new QSlider(Qt::Horizontal);
         VideoSlider->setTickPosition(QSlider::TicksBelow);
-        VideoSlider->setMinimum(0);
+        VideoSlider->setMinimum(1);
         VideoSlider->setMaximum(2000);
         VideoSlider->setSingleStep(200);
-        VideoSlider->setValue(1000);
-        QLabel *VideoLabelSlider = new QLabel;
+        VideoSlider->setValue(33);
+        VideoLabelSlider = new QLabel;
         VideoLabelSlider->setFixedWidth(40);
         QString strV;
         VideoLabelSlider->setText(strV.setNum(VideoSlider->sliderPosition()));
@@ -92,21 +105,21 @@ Data::Data(QWidget *parent) : QWidget(parent)
 
         QLabel *LimitsLabelYmin = new QLabel(tr("Y min"));
         LimitsLineEYmin = new QLineEdit();
-        LimitsLineEYmin->setText("0.0");
+        LimitsLineEYmin->setText("0");
         QHBoxLayout *LyYmin = new QHBoxLayout;
         LyYmin->addWidget(LimitsLabelYmin);
         LyYmin->addWidget(LimitsLineEYmin);
 
         QLabel *LimitsLabelYmax = new QLabel(tr("Y max"));
         LimitsLineEYmax = new QLineEdit();
-        LimitsLineEYmax->setText("2000.0");
+        LimitsLineEYmax->setText("1500");
         QHBoxLayout *LyYmax = new QHBoxLayout;
         LyYmax->addWidget(LimitsLabelYmax);
         LyYmax->addWidget(LimitsLineEYmax);
 
         QLabel *LimitsLabelZmax = new QLabel(tr("Z max"));
         LimitsLineEZmax = new QLineEdit();
-        LimitsLineEZmax->setText("4000.0");
+        LimitsLineEZmax->setText("4000");
         QHBoxLayout *LyZmax = new QHBoxLayout;
         LyZmax->addWidget(LimitsLabelZmax);
         LyZmax->addWidget(LimitsLineEZmax);
@@ -126,11 +139,11 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QLabel *PointsLabelrefresco = new QLabel(tr("refresco"));
         PointsSlider = new QSlider(Qt::Horizontal);
         PointsSlider->setTickPosition(QSlider::TicksBelow);
-        PointsSlider->setMinimum(0);
+        PointsSlider->setMinimum(1);
         PointsSlider->setMaximum(2000);
         PointsSlider->setSingleStep(200);
-        PointsSlider->setValue(1000);
-        QLabel *PointsLabelSlider = new QLabel;
+        PointsSlider->setValue(33);
+        PointsLabelSlider = new QLabel;
         PointsLabelSlider->setFixedWidth(40);
         QString strP;
         PointsLabelSlider->setText(strP.setNum(PointsSlider->sliderPosition()));
@@ -142,11 +155,11 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QLabel *PointsLabelM = new QLabel(tr("modulo"));
         PointsSliderM = new QSlider(Qt::Horizontal);
         PointsSliderM->setTickPosition(QSlider::TicksBelow);
-        PointsSliderM->setMinimum(0);
+        PointsSliderM->setMinimum(1);
         PointsSliderM->setMaximum(10);
         PointsSliderM->setSingleStep(1);
         PointsSliderM->setValue(1);
-        QLabel *PointsLabelSliderM = new QLabel;
+        PointsLabelSliderM = new QLabel;
         PointsLabelSliderM->setFixedWidth(40);
         QString strPM;
         PointsLabelSliderM->setText(strPM.setNum(PointsSliderM->sliderPosition()));
@@ -286,10 +299,10 @@ Data::Data(QWidget *parent) : QWidget(parent)
     setData();
 }
 
-/**
- * @brief Data::setLedOption
+/*!
+ * \brief Data::setLedOption
  * to set led light on kinect
- * @param integer holding freenect_led_options value to set led light
+ * \param integer holding freenect_led_options value to set led light
  */
 void Data::setLedOption(int option)
 {
@@ -299,23 +312,30 @@ void Data::setLedOption(int option)
     }
 }
 
-/**
- * @brief Data::getLedOption
- * @return int value of freenect_led_options
+/*!
+ * \brief Data::getLedOption
+ * \return int value of freenect_led_options
  */
 int Data::getLedOption()
 {
     return ledOption;
 }
 
-/**
- * @brief Data::setData
+/*!
+ * \brief Data::setData
  * set data members values as selected in tab_2
  */
 void Data::setData()
 {
     m_srvK.m_fAngulo = LimitsLineEAngulo->text().toFloat();
     m_srvK.m_iAnguloKinect = LimitsLineEAngK->text().toInt();
+    if( m_srvK.m_iAnguloKinect > 30 ){
+        m_srvK.m_iAnguloKinect = 30;
+        LimitsLineEAngK->setText("30");
+    }else if( m_srvK.m_iAnguloKinect < -30 ){
+        m_srvK.m_iAnguloKinect = -30;
+        LimitsLineEAngK->setText("-30");
+    }
     m_srvK.m_fAltura = LimitsLineEAltura->text().toFloat();
     m_srvK.m_fYMin = LimitsLineEYmin->text().toFloat();
     m_srvK.m_fYMax = LimitsLineEYmax->text().toFloat();
@@ -349,10 +369,10 @@ void Data::setData()
     emit dataChanged();
 }
 
-/**
- * @brief Data::setSrvK
+/*!
+ * \brief Data::setSrvK
  * sets individual values to all members of srvKinect
- * @param newSrvK   srvKinect to copy in Data.m_srvK
+ * \param newSrvK   srvKinect to copy in Data.m_srvK
  */
 void Data::setSrvK(srvKinect newSrvK)
 {
@@ -379,12 +399,297 @@ void Data::setSrvK(srvKinect newSrvK)
     m_srvK.m_bCompressColor = newSrvK.m_bCompressColor;
 }
 
-/**
- * @brief Data::getSrvK
- * @return Data.m_srvK
+/*!
+ * \brief Data::getSrvK
+ * \return Data.m_srvK
  */
 srvKinect Data::getSrvK()
 {
     return m_srvK;
+}
+
+/*!
+ * \brief Data::setVideoCBcomprimido
+ * check box to send video compress, value set
+ * show client setting on server data tab
+ * \param value
+ * uint8_t = 0 not checked, otherwise checked (send compressed)
+ */
+void Data::setVideoCBcomprimido(uint8_t value)
+{
+    if( value ) VideoCBcomprimido->setChecked(true);
+    else VideoCBcomprimido->setChecked(false);
+}
+/**
+ * @brief Data::setVideoCBenvio
+ * check box to send video, value set
+ * show client setting on server data tab
+ * @param value
+ * uint8_t = 0 not checked, otherwise checked (send)
+ */
+void Data::setVideoCBenvio(uint8_t value)
+{
+    if( value ) VideoCBenvio->setChecked(true);
+    else VideoCBenvio->setChecked(false);
+}
+/**
+ * @brief Data::setVideoSlider
+ * refresh in msec request next video frame
+ * show client setting on server data tab
+ * @param value
+ * uint32_t from 1 to 2000 msec
+ * below 33 msec is unrealistic
+ */
+void Data::setVideoSlider(uint32_t value)
+{
+    VideoSlider->setValue(value);
+    QString s;
+    s.setNum(value);
+    VideoLabelSlider->setText(s);
+}
+/**
+ * @brief Data::setDepthCBcomprimido
+ * check box to send depth compress, value set
+ * show client setting on server data tab
+ * @param value
+ * uint8_t = 0 not checked, otherwise checked (send compressed)
+ */
+void Data::setDepthCBcomprimido(uint8_t value)
+{
+    if( value ) DepthCBcomprimido->setChecked(true);
+    else DepthCBcomprimido->setChecked(false);
+}
+/**
+ * @brief Data::setDepthCBenvio
+ * check box to send depth, value set
+ * show client setting on server data tab
+ * @param value
+ * uint8_t = 0 not checked, otherwise checked (send)
+ */
+void Data::setDepthCBenvio(uint8_t value)
+{
+    if( value ) DepthCBenvio->setChecked(true);
+    else DepthCBenvio->setChecked(false);
+}
+/**
+ * @brief Data::setDepthSlider
+ * refresh in msec request next depth frame
+ * show client setting on server data tab
+ * @param value
+ * uint32_t from 1 to 2000 msec
+ * below 33 msec is unrealistic
+ */
+void Data::setDepthSlider(uint32_t value)
+{
+    DepthSlider->setValue(value);
+    QString s;
+    s.setNum(value);
+    DepthLabelSlider->setText(s);
+}
+/**
+ * @brief Data::setPointsLineEYmax
+ * set superior limit in mm to record data
+ * show client setting on server data tab
+ * @param value
+ * int32_t distance in mm respect ground level
+ */
+void Data::setPointsLineEYmax(int32_t value)
+{
+    QString sY;
+    sY.setNum(value);
+    PointsLineEYmax->setText(sY);
+}
+/**
+ * @brief Data::setPointsLineEYmin
+ * set inferior limit in mm to record data
+ * @param value
+ * int32_t distance in mm respect ground level
+ */
+void Data::setPointsLineEYmin(int32_t value)
+{
+    QString sY;
+    sY.setNum(value);
+    PointsLineEYmin->setText(sY);
+}
+/**
+ * @brief Data::setPointsLineEEcu
+ * 'barrido' maximum distance in mm to record data
+ * show client setting on server data tab
+ * @param value
+ * uint32_t distance in mm
+ */
+void Data::setPointsLineEEcu(int32_t value)
+{
+    QString s;
+    s.setNum(value);
+    PointsLineEEcu->setText(s);
+}
+/**
+ * @brief Data::setPointsCBcomprimido
+ * check box to send 'barrido' compress value set
+ * show client setting on server data tab
+ * @param value
+ * uint8_t = 0 not checked, otherwise checked (send compressed)
+ */
+void Data::setPointsCBcomprimido(uint8_t value)
+{
+    if( value ) PointsCBcomprimido->setChecked(true);
+    else PointsCBcomprimido->setChecked(false);
+}
+/**
+ * @brief Data::setPointsCBenvioB
+ * check box to send 'barrido' value set
+ * show client setting on server data tab
+ * @param value
+ * uint8_t = 0 not checked, otherwise checked (send)
+ */
+void Data::setPointsCBenvioB(uint8_t value)
+{
+    if( value ) PointsCBenvioB->setChecked(true);
+    else PointsCBenvioB->setChecked(false);
+}
+/**
+ * @brief Data::setPointsCBenvio2
+ * check box to send 2D points value set
+ * show client setting on server data tab
+ * @param value
+ * uint8_t = 0 not checked, otherwise checked (send)
+ */
+void Data::setPointsCBenvio2(uint8_t value)
+{
+    if( value ) PointsCBenvio2->setChecked(true);
+    else PointsCBenvio2->setChecked(false);
+}
+/**
+ * @brief Data::setPointsCBenvio3D
+ * check box to send 3D points value set
+ * show client setting on server data tab
+ * @param value
+ * uint8_t = 0 not checked, otherwise checked (send)
+ */
+void Data::setPointsCBenvio3D(uint8_t value)
+{
+    if( value ) PointsCBenvio3D->setChecked(true);
+    else PointsCBenvio3D->setChecked(false);
+}
+/**
+ * @brief Data::setPointsSliderM
+ * from how many points pick one to add to point cloud
+ * show client setting on server data tab
+ * @param value
+ * uint8_t from 1 (all selected 100%) to 10 (10% selected)
+ */
+void Data::setPointsSliderM(uint8_t value)
+{
+    PointsSliderM->setValue(value);
+    QString s;
+    s.setNum(value);
+    PointsLabelSliderM->setText(s);
+}
+/**
+ * @brief Data::setPointsSlider
+ * refresh in msec request next point cloud
+ * show client setting on server data tab
+ * @param value
+ * uint32_t from 1 to 2000 msec
+ * below 33 msec is unrealistic
+ */
+void Data::setPointsSlider(uint32_t value)
+{
+    PointsSlider->setValue(value);
+    QString s;
+    s.setNum(value);
+    PointsLabelSlider->setText(s);
+}
+/**
+ * @brief Data::setLimitsLineEZmax
+ * maximum distance in mm to record data
+ * show client setting on server data tab
+ * @param value
+ * double distance in mm from camera to
+ * longest distance data recorded
+ */
+void Data::setLimitsLineEZmax(double value)
+{
+    QString sZ;
+    sZ.setNum(value);
+    LimitsLineEZmax->setText(sZ);
+}
+/**
+ * @brief Data::setLimitsLineEYmax
+ * maximum high in mm to record data
+ * show client setting on server data tab
+ * @param value
+ * double distance in mm from ground to
+ * highest data to be shown
+ */
+void Data::setLimitsLineEYmax(double value)
+{
+    QString sY;
+    sY.setNum(value);
+    LimitsLineEYmax->setText(sY);
+}
+/**
+ * @brief Data::setLimitsLineEYmin
+ * minimum hight in mm to start data record
+ * show client setting on server data tab
+ * @param value
+ * double distance in mm from ground to
+ * lowest data to be shown
+ */
+void Data::setLimitsLineEYmin(double value)
+{
+    QString sY;
+    sY.setNum(value);
+    LimitsLineEYmin->setText(sY);
+}
+/**
+ * @brief Data::setLimitsLineEAltura
+ * high of camera above ground in meters
+ * show client setting on server data tab
+ * @param value
+ * double distance in meters to ground from camera
+ */
+void Data::setLimitsLineEAltura(double value)
+{
+    QString sA;
+    sA.setNum(value);
+    LimitsLineEAltura->setText(sA);
+}
+/**
+ * @brief Data::setLimitsLineEAngK
+ * angle of kinect camera respect horizontal
+ * show client setting on server data tab
+ * @param value
+ * integer to set camera angle horizontal = 0º limits(-30 30)
+ */
+void Data::setLimitsLineEAngK(int8_t value)
+{
+    if( value < -30 ){
+        value = - 30;
+        qDebug(" -  máximo angulo -30");
+    }
+    if( value > 30 ){
+        value = 30;
+        qDebug(" -  máximo angulo 30");
+    }
+    QString sAngulo;
+    sAngulo.setNum(value);
+    LimitsLineEAngK->setText(sAngulo);
+}
+/**
+ * @brief Data::setLimitsLineEAngulo
+ * angle of kinect base
+ * show client setting on server data tab
+ * @param value
+ * double to set angle, horizontal = 0º
+ */
+void Data::setLimitsLineEAngulo(double value)
+{
+    /// arregla esto , que esté de -359.99999 a 359.9999----DEBUG
+//    if( value > 360.0 ) value = value%360;
+    QString sAngulo;
+    sAngulo.setNum(value);
+    LimitsLineEAngulo->setText(sAngulo);
 }
 

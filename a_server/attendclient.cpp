@@ -50,7 +50,60 @@ AttendClient::AttendClient(QTcpSocket *socket, std::vector<uint8_t> &vectorVideo
 */
 AttendClient::~AttendClient()
 {
-
+    if(s_video->isListening()){
+        if(skt_video->isValid()){
+            skt_video->disconnectFromHost();
+            if( !skt_video->waitForDisconnected(3000) ){
+                skt_video->abort();
+            }
+        }
+        s_video->disconnect();
+    }
+    if(s_depth->isListening()){
+        if(skt_depth->isValid()){
+            skt_depth->disconnectFromHost();
+            if( !skt_depth->waitForDisconnected(3000) ){
+                skt_depth->abort();
+            }
+        }
+        s_depth->disconnect();
+    }
+    if(s_3d->isListening()){
+        if(skt_3d->isValid()){
+            skt_3d->disconnectFromHost();
+            if( !skt_3d->waitForDisconnected(3000) ){
+                skt_3d->abort();
+            }
+        }
+        s_3d->disconnect();
+    }
+    if(s_2d->isListening()){
+        if(skt_2d->isValid()){
+            skt_2d->disconnectFromHost();
+            if( !skt_2d->waitForDisconnected(3000) ){
+                skt_2d->abort();
+            }
+        }
+        s_2d->disconnect();
+    }
+    if(s_barrido->isListening()){
+        if(skt_barrido->isValid()){
+            skt_barrido->disconnectFromHost();
+            if( !skt_barrido->waitForDisconnected(3000) ){
+                skt_barrido->abort();
+            }
+        }
+        s_barrido->disconnect();
+    }
+    if(s_accel->isListening()){
+        if(skt_accel->isValid()){
+            skt_accel->disconnectFromHost();
+            if( !skt_accel->waitForDisconnected(3000) ){
+                skt_accel->abort();
+            }
+        }
+        s_accel->disconnect();
+    }
 }
 /**
  * @brief AttendClient::startServers
@@ -86,12 +139,60 @@ void AttendClient::startServers()
     s_accel->listen(QHostAddress::Any,ACCELPORT);
     connect(s_accel,SIGNAL(newConnection()),this,SLOT(incomingAccel()));
 
-    sizeVideo = sizeDepth = size3d = size2d = sizeBarrido = sizeAccel = 0;
+    sizeSrvK = sizeVideo = sizeDepth = size3d = size2d = sizeBarrido = sizeAccel = 0;
 }
-
+/**
+ * @brief AttendClient::readSrvKdata
+ * read srvKinect new value when sended by client
+ */
 void AttendClient::readSrvKdata()
 {
+    qDebug("AttendClient::readSrvKdata");
+    //-------------------------------------------------------read client msg
+    QDataStream in(m_socket);//read client petition
+    in.setVersion(QDataStream::Qt_5_0);
 
+    if (sizeSrvK == 0) {//check there's enough bytes to read
+        if (m_socket->bytesAvailable() < sizeof(quint64))
+            return;
+        in >> sizeSrvK;//read and save into quint64 sizeSrvK
+    }
+    if (m_socket->bytesAvailable() < sizeSrvK){//check there's enough bytes to read
+        return;//if not wait till you have all data size video says
+    }
+
+    in >> flagSrvK;//flag = 0 will stop and disconnect, != 0 read srvK
+    qDebug("tamaño: %u  info: %u", sizeSrvK, flagSrvK);//DEBUG
+    if( !flagSrvK ){
+        m_socket->disconnectFromHost();
+        qDebug("Cliente ordena desconectar");
+        this->deleteLater();
+        this->~AttendClient();
+        return;
+    }//--------------- only goes ahead if all data received & flagSrvK != 0
+    in >> srvK.m_fAngulo;
+    in >> srvK.m_iAnguloKinect;
+    in >> srvK.m_fAltura;
+    in >> srvK.m_fYMin;
+    in >> srvK.m_fYMax;
+    in >> srvK.m_fZMax;
+    in >> srvK.m_ulRefresco3D;
+    in >> srvK.m_usModulo3D;
+    in >> srvK.m_bEnvio3D;
+    in >> srvK.m_bEnvio2D;
+    in >> srvK.m_bEnvioBarrido;
+    in >> srvK.m_bCompress3D;
+    in >> srvK.m_iBarridoEcu;
+    in >> srvK.m_iBarridoYMin;
+    in >> srvK.m_iBarridoYMax;
+    in >> srvK.m_ulRefrescoDepth;
+    in >> srvK.m_bEnvioDepth;
+    in >> srvK.m_bCompressDepth;
+    in >> srvK.m_ulRefrescoColor;
+    in >> srvK.m_bEnvioColor;
+    in >> srvK.m_bCompressColor;
+    emit newSrvKinect(srvK);
+    sizeSrvK = 0;//to allow reading next message size
 }
 
 /**
@@ -103,7 +204,6 @@ void AttendClient::incomingVideo()
     skt_video = s_video->nextPendingConnection();
     connect(skt_video,SIGNAL(readyRead()),this,SLOT(sendVideo()));
 }
-
 /**
  * @brief AttendClient::sendVideo
  * send video frame (image) through skt_video to client
@@ -118,9 +218,9 @@ void AttendClient::sendVideo()
     }else{///-------Al revés -> cuando acabes DEBUG  if != return (menos código, más simple)
         qDebug("  otro cliente :o(  %u yo %u ",skt_video->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
         return;//if client is not our client wait for next connection
-    }
+    }///--------------- cuando simplificado quita else{} -----------------DEBUG
 
-    //---------------------------------read client msg
+    //-------------------------------------------------------read client msg
     QDataStream in(skt_video);//read client petition
     in.setVersion(QDataStream::Qt_5_0);
 
@@ -141,27 +241,17 @@ void AttendClient::sendVideo()
         return;
     }//--------------- only goes ahead if all data received & flagVideo != 0
     sizeVideo = 0;//to allow reading next message size
-//--------------------------------------------------------------------create & send video frame as QImage
-//    qDebug("  attend tamaño vector video = %u",structBuffers.ptrVideoBuf->size());
-//std::vector<uint8_t> auxVector(*structBuffers.ptrVideoBuf);
-//qDebug("  attend tamaño vector video = %u",auxVector.size());
-    QImage image;
-//image = QImage(auxVector.data(),640,480,QImage::Format_RGB888);
-    image = QImage(structBuffers.ptrVideoBuf->data(),640,480,QImage::Format_RGB888);///--------------DEBUG
-//imgVideo = QImage("/home/nadie/apikinect/img/cl415pintada.jpg");///--------------DEBUG
 
+//----------------------------------------------------------------create & send video frame as QImage
+    QImage image = QImage(structBuffers.ptrVideoBuf->data(),640,480,QImage::Format_RGB888);
     QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << image;
     out.device()->seek(0);//puntero a inicio buff
     out << quint64(buff.size() - sizeof(quint64));//set buff size at beginning
-
-    qDebug("  tamaño antes enviado: %u",(buff.size()-sizeof(quint64))) ;//DEBUG
-
+//    qDebug("  tamaño antes enviado: %u",(buff.size()-sizeof(quint64))) ;//DEBUG
     skt_video->write(buff);//enviamos
-
-
 }
 
 /**
@@ -173,10 +263,61 @@ void AttendClient::incomingDepth()
     skt_depth = s_depth->nextPendingConnection();
     connect(skt_depth,SIGNAL(readyRead()),this,SLOT(sendDepth()));
 }
-
+/**
+ * @brief AttendClient::sendDepth
+ * send depth frame (image) through skt_depth to client
+ */
 void AttendClient::sendDepth()
 {
+    qDebug("AttendClient::sendDepth");
 
+    if(skt_depth->peerAddress() != peerAddr){//AttendClient only attend single client
+        qDebug("  otro cliente :o(  %u yo %u ",skt_depth->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+        return;//if client is not our client wait for next connection
+    }
+
+    //-------------------------------------------------------read client msg
+    QDataStream in(skt_depth);//read client petition
+    in.setVersion(QDataStream::Qt_5_0);
+
+    if (sizeDepth == 0) {//check there's enough bytes to read
+        if (skt_depth->bytesAvailable() < sizeof(quint64))
+            return;
+        in >> sizeDepth;//read and save into quint64 sizeDepth
+    }
+    if (skt_depth->bytesAvailable() < sizeDepth){//check there's enough bytes to read
+        return;//if not wait till you have all data size video says
+    }
+
+    in >> flagDepth;//flag = 0 will stop and disconnect, != 0 send image
+    qDebug("tamaño: %u  info: %u", sizeDepth, flagDepth);//DEBUG
+    if( !flagDepth ){
+        skt_depth->disconnectFromHost();
+        qDebug("Cliente ordena desconectar Depth");
+        return;
+    }//--------------- only goes ahead if all data received & flagDepth != 0
+    sizeDepth = 0;//to allow reading next message size
+
+//----------------------------------------------------------------create & send depth frame as QImage
+    QImage image = QImage(640,480,QImage::Format_Grayscale8);
+    unsigned char r,g,b, distaChar;
+    for(int x = 0; x < 640; x++){
+        for(int y = 0; y < 480; y++){
+            int value = (*structBuffers.ptrDepthBuf)[(x+y*640)];//value is distance in mm
+            distaChar = value/39;//to transform distance to 8bit grey
+            r=g=b=distaChar;
+            image.setPixel(x,y,qRgb(r,g,b));
+        }
+    }
+
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << image;
+    out.device()->seek(0);//puntero a inicio buff
+    out << quint64(buff.size() - sizeof(quint64));//set buff size at beginning
+//    qDebug("  tamaño antes enviado: %u",(buff.size()-sizeof(quint64))) ;//DEBUG
+    skt_depth->write(buff);//enviamos
 }
 
 void AttendClient::incoming3d()

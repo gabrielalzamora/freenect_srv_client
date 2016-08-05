@@ -22,21 +22,19 @@ public:
 public slots:
     void setHost();
     void dataChanged();
-    void sendNewSrvK(srvKinect newSrvK);
 
 private slots:
     //server
     void initConnection();
     void closeConnection();
+    void socketErrorVideo();
     //video
     void initVideo();
     void finalizeVideo();
-    void socketErrorVideo();
     void readDataVideo();
     //depth
     void initDepth();
     void finalizeDepth();
-    void socketErrorDepth();
     void readDataDepth();
 
 private:
@@ -50,11 +48,15 @@ private:
     QTcpSocket *skt_video;
     int connectedVideo;
     quint64 sizeVideo;
-    //QImage *imgVideo;
     QGraphicsScene *sceneVideo;
     QGraphicsItem *itemVideo;
 
     QTcpSocket *skt_depth;
+    int connectedDepth;
+    quint64 sizeDepth;
+    QGraphicsScene *sceneDepth;
+    QGraphicsItem *itemDepth;
+
     QTcpSocket *skt_3D;
     QTcpSocket *skt_2D;
     QTcpSocket *skt_barrido;

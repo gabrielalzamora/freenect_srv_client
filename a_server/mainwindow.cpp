@@ -26,11 +26,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
-/*    if(currentDeviceIndex !=-1){
+    if(currentDeviceIndex !=-1){
         stoploop();
         stopK(currentDeviceIndex);
     }
-*/
     delete sceneVideo;
     delete sceneDepth;
     delete sceneBarre;
@@ -132,28 +131,54 @@ void MainWindow::updateKinect()
  */
 void MainWindow::updateSrvKinect(srvKinect newSrvK)
 {
+//    qDebug("MainServer::updateKinect");
     ui->tab_2->m_srvK.m_fAngulo = newSrvK.m_fAngulo;
+    ui->tab_2->setLimitsLineEAngulo(newSrvK.m_fAngulo);
     ui->tab_2->m_srvK.m_iAnguloKinect = newSrvK.m_iAnguloKinect;
+    ui->tab_2->setLimitsLineEAngK(newSrvK.m_iAnguloKinect);
     ui->tab_2->m_srvK.m_fAltura = newSrvK.m_fAltura;
+    ui->tab_2->setLimitsLineEAltura(newSrvK.m_fAltura);
     ui->tab_2->m_srvK.m_fYMin = newSrvK.m_fYMin;
+    ui->tab_2->setLimitsLineEYmin(newSrvK.m_fYMin);
     ui->tab_2->m_srvK.m_fYMax = newSrvK.m_fYMax;
+    ui->tab_2->setLimitsLineEYmax(newSrvK.m_fYMax);
     ui->tab_2->m_srvK.m_fZMax = newSrvK.m_fZMax;
-    ui->tab_2->m_srvK.m_ulRefresco3D = newSrvK.m_ulRefresco3D;
-    ui->tab_2->m_srvK.m_usModulo3D = newSrvK.m_usModulo3D;
-    ui->tab_2->m_srvK.m_bEnvio3D = newSrvK.m_bEnvio3D;
-    ui->tab_2->m_srvK.m_bEnvio2D = newSrvK.m_bEnvio2D;
-    ui->tab_2->m_srvK.m_bEnvioBarrido = newSrvK.m_bEnvioBarrido;
-    ui->tab_2->m_srvK.m_bCompress3D = newSrvK.m_bCompress3D;
-    ui->tab_2->m_srvK.m_iBarridoEcu = newSrvK.m_iBarridoEcu;
-    ui->tab_2->m_srvK.m_iBarridoYMin = newSrvK.m_iBarridoYMin;
-    ui->tab_2->m_srvK.m_iBarridoYMax = newSrvK.m_iBarridoYMax;
-    ui->tab_2->m_srvK.m_ulRefrescoDepth = newSrvK.m_ulRefrescoDepth;
-    ui->tab_2->m_srvK.m_bEnvioDepth = newSrvK.m_bEnvioDepth;
-    ui->tab_2->m_srvK.m_bCompressDepth = newSrvK.m_bCompressDepth;
-    ui->tab_2->m_srvK.m_ulRefrescoColor = newSrvK.m_ulRefrescoColor;
-    ui->tab_2->m_srvK.m_bEnvioColor = newSrvK.m_bEnvioColor;
-    ui->tab_2->m_srvK.m_bCompressColor = newSrvK.m_bCompressColor;
+    ui->tab_2->setLimitsLineEZmax(newSrvK.m_fZMax);
 
+    ui->tab_2->m_srvK.m_ulRefresco3D = newSrvK.m_ulRefresco3D;
+    ui->tab_2->setPointsSlider(newSrvK.m_ulRefresco3D);
+    ui->tab_2->m_srvK.m_usModulo3D = newSrvK.m_usModulo3D;
+    ui->tab_2->setPointsSliderM(newSrvK.m_usModulo3D);
+
+    ui->tab_2->m_srvK.m_bEnvio3D = newSrvK.m_bEnvio3D;
+    ui->tab_2->setPointsCBenvio3D(newSrvK.m_bEnvio3D);
+    ui->tab_2->m_srvK.m_bEnvio2D = newSrvK.m_bEnvio2D;
+    ui->tab_2->setPointsCBenvio2(newSrvK.m_bEnvio2D);
+    ui->tab_2->m_srvK.m_bEnvioBarrido = newSrvK.m_bEnvioBarrido;
+    ui->tab_2->setPointsCBenvioB(newSrvK.m_bEnvioBarrido);
+    ui->tab_2->m_srvK.m_bCompress3D = newSrvK.m_bCompress3D;
+    ui->tab_2->setPointsCBcomprimido(newSrvK.m_bCompress3D);
+    ui->tab_2->m_srvK.m_iBarridoEcu = newSrvK.m_iBarridoEcu;
+    ui->tab_2->setPointsLineEEcu(newSrvK.m_iBarridoEcu);
+    ui->tab_2->m_srvK.m_iBarridoYMin = newSrvK.m_iBarridoYMin;
+    ui->tab_2->setPointsLineEYmin(newSrvK.m_iBarridoYMin);
+    ui->tab_2->m_srvK.m_iBarridoYMax = newSrvK.m_iBarridoYMax;
+    ui->tab_2->setPointsLineEYmax(newSrvK.m_iBarridoYMax);
+
+    ui->tab_2->m_srvK.m_ulRefrescoDepth = newSrvK.m_ulRefrescoDepth;
+    ui->tab_2->setDepthSlider(newSrvK.m_ulRefrescoDepth);
+    ui->tab_2->m_srvK.m_bEnvioDepth = newSrvK.m_bEnvioDepth;
+    ui->tab_2->setDepthCBenvio(newSrvK.m_bEnvioDepth);
+    ui->tab_2->m_srvK.m_bCompressDepth = newSrvK.m_bCompressDepth;
+    ui->tab_2->setDepthCBcomprimido(newSrvK.m_bCompressDepth);
+    ui->tab_2->m_srvK.m_ulRefrescoColor = newSrvK.m_ulRefrescoColor;
+    ui->tab_2->setVideoSlider(newSrvK.m_ulRefrescoColor);
+    ui->tab_2->m_srvK.m_bEnvioColor = newSrvK.m_bEnvioColor;
+    ui->tab_2->setVideoCBenvio(newSrvK.m_bEnvioColor);
+    ui->tab_2->m_srvK.m_bCompressColor = newSrvK.m_bCompressColor;
+    ui->tab_2->setVideoCBcomprimido(newSrvK.m_bCompressColor);
+
+    emit updateKinect();
 }
 
 /**
@@ -362,13 +387,13 @@ void MainWindow::printTimeVector(std::vector<int> &timeV)
 /**
  * @brief MainWindow::on_pbGo_clicked start selected kinect data flow
  */
-void MainWindow::on_pbGo_clicked()
+void MainWindow::on_pbGo_clicked()///--------------------------DEBUG
 {
-    ui->pbGo->setEnabled(false);
+    //ui->pbGo->setEnabled(false);
     int index = ui->combo->currentText().toInt();
-    startK(index);
+    //startK(index);
     currentDeviceIndex = index;
-    loop();
+    //loop();
 }
 /**
  * @brief MainWindow::on_pbStop_clicked stop kinect data flow and delete handler
@@ -427,14 +452,10 @@ void MainWindow::attendNewClient()///------test with concurrent clients---------
 {
     qDebug("MainWindow::startServer");
     attendant = new AttendClient(mainServer->nextPendingConnection(),&ptrToBuffers,this);
-//    attendant = new AttendClient(mainServer->nextPendingConnection(),videoBuf,this);//----DEBUG
-
     if( attendant == NULL ) ui->textEdit->setText("BAD_ALLOC  AttendClient");
     attendClients.push_back(attendant);
-/*    connect(attendClients[attendClients.size()-1],SIGNAL(newSrvKinect(srvKinect newSrvK)),
-                                             this,SLOT(updateSrvKinect(srvKinect)));
-*/
-    connect(attendant,SIGNAL(newSrvKinect(srvKinect newSrvK)),this,SLOT(updateSrvKinect(srvKinect)));
+
+    connect(attendant,SIGNAL(newSrvKinect(srvKinect)),this,SLOT(updateSrvKinect(srvKinect)));
 }
 
 /**
@@ -444,6 +465,6 @@ void MainWindow::attendNewClient()///------test with concurrent clients---------
  */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    this->~MainWindow();
+    //this->~MainWindow();
     //exit(0);
 }

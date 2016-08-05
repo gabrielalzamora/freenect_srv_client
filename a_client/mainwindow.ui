@@ -321,7 +321,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="0">
-         <widget class="QGraphicsView" name="gviewDista">
+         <widget class="QGraphicsView" name="gviewDepth">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>

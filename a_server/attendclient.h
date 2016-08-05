@@ -14,7 +14,7 @@ class AttendClient : public QObject
     Q_OBJECT
 public:
     explicit AttendClient(QTcpSocket *socket, pBuf *ptrToBuffers, QObject *parent=0);
-    explicit AttendClient(QTcpSocket *socket, std::vector<uint8_t> &vectorVideo, QObject *parent=0);
+//    explicit AttendClient(QTcpSocket *socket, std::vector<uint8_t> &vectorVideo, QObject *parent=0);//DEBUG
     ~AttendClient();
 
 signals:
@@ -40,6 +40,8 @@ public slots:
 
 private:
     QTcpSocket *m_socket;///< as srvK socket
+    quint64 sizeSrvK;
+    quint8 flagSrvK;
     QHostAddress peerAddr;
     quint16 peerPort;
     pBuf structBuffers;
@@ -50,12 +52,13 @@ private:
     QTcpSocket *skt_video;
     quint64 sizeVideo;
     quint8 flagVideo;
-    QImage imgVideo;
-    std::vector<uint8_t> m_vectorVideo;
+    //QImage imgVideo;
+    //std::vector<uint8_t> m_vectorVideo;
 
     QTcpServer *s_depth;
     QTcpSocket *skt_depth;
     quint64 sizeDepth;
+    quint8 flagDepth;
 
     QTcpServer *s_3d;
     QTcpSocket *skt_3d;

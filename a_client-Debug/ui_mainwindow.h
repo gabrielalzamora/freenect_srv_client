@@ -73,7 +73,7 @@ public:
     QTabWidget *tabWidget;
     QWidget *tab;
     QGridLayout *gridLayout;
-    QGraphicsView *gviewDista;
+    QGraphicsView *gviewDepth;
     QGraphicsView *gviewVideo;
     QGraphicsView *gviewBarre;
     QOpenGLWidget *oglWidget;
@@ -276,17 +276,17 @@ public:
         gridLayout->setSpacing(6);
         gridLayout->setContentsMargins(11, 11, 11, 11);
         gridLayout->setObjectName(QStringLiteral("gridLayout"));
-        gviewDista = new QGraphicsView(tab);
-        gviewDista->setObjectName(QStringLiteral("gviewDista"));
+        gviewDepth = new QGraphicsView(tab);
+        gviewDepth->setObjectName(QStringLiteral("gviewDepth"));
         QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Preferred);
         sizePolicy1.setHorizontalStretch(0);
         sizePolicy1.setVerticalStretch(0);
-        sizePolicy1.setHeightForWidth(gviewDista->sizePolicy().hasHeightForWidth());
-        gviewDista->setSizePolicy(sizePolicy1);
-        gviewDista->setMinimumSize(QSize(320, 240));
-        gviewDista->setBaseSize(QSize(320, 240));
+        sizePolicy1.setHeightForWidth(gviewDepth->sizePolicy().hasHeightForWidth());
+        gviewDepth->setSizePolicy(sizePolicy1);
+        gviewDepth->setMinimumSize(QSize(320, 240));
+        gviewDepth->setBaseSize(QSize(320, 240));
 
-        gridLayout->addWidget(gviewDista, 0, 0, 1, 1);
+        gridLayout->addWidget(gviewDepth, 0, 0, 1, 1);
 
         gviewVideo = new QGraphicsView(tab);
         gviewVideo->setObjectName(QStringLiteral("gviewVideo"));

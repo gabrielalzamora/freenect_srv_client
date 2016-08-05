@@ -1,7 +1,6 @@
 #ifndef DATOS_H
 #define DATOS_H
 
-#include <cstdint>
 #include <QWidget>
 #include <QGroupBox>
 #include <QRadioButton>
@@ -60,7 +59,7 @@ typedef struct ptrBuf{
     std::vector<uint16_t> *ptrDepthBuf;///< container of depth info from kinect
     std::vector<point3c> *ptrP3Buf;///< container of points cloud <- video+depth
     std::vector<point2> *ptrP2Buf;///< container of 2D points = (point cloud) - color - z
-    std::vector<uint32_t> *ptrBarridoBuf;///< barridoBuf contains distance on angle (360-i)/2 degrees, xOz plane
+    std::vector<uint32_t> *ptrBarridoBuf;///< barridoBuf contains distance to closer object on angle (360-i)/2 degrees, xOz plane (horizontal to camera)
     std::vector<double> *ptrAccel;///< acceleration components x,y,z (y ~ 9,81 if m_iAnguloKinect=0)
 }pBuf;
 
@@ -71,6 +70,28 @@ public:
     explicit Data(QWidget *parent = 0);
     srvKinect m_srvK;
     int ledOption;
+
+    void setLimitsLineEAngulo(double value);
+    void setLimitsLineEAngK(int8_t value);
+    void setLimitsLineEAltura(double value);
+    void setLimitsLineEYmin(double value);
+    void setLimitsLineEYmax(double value);
+    void setLimitsLineEZmax(double value);
+    void setPointsSlider(uint32_t value);
+    void setPointsSliderM(uint8_t value);
+    void setPointsCBenvio3D(uint8_t value);
+    void setPointsCBenvio2(uint8_t value);
+    void setPointsCBenvioB(uint8_t value);
+    void setPointsCBcomprimido(uint8_t value);
+    void setPointsLineEEcu(int32_t value);
+    void setPointsLineEYmin(int32_t value);
+    void setPointsLineEYmax(int32_t value);
+    void setDepthSlider(uint32_t value);
+    void setDepthCBenvio(uint8_t value);
+    void setDepthCBcomprimido(uint8_t value);
+    void setVideoSlider(uint32_t value);
+    void setVideoCBenvio(uint8_t value);
+    void setVideoCBcomprimido(uint8_t value);
 
 signals:
     void ledOptionChanged();
@@ -93,7 +114,9 @@ private:
     QLineEdit *LimitsLineEYmax;
     QLineEdit *LimitsLineEZmax;
     QSlider *PointsSlider;
+    QLabel *PointsLabelSlider;
     QSlider *PointsSliderM;
+    QLabel *PointsLabelSliderM;
     QCheckBox *PointsCBenvio3D;
     QCheckBox *PointsCBenvio2;
     QCheckBox *PointsCBenvioB;
@@ -102,9 +125,11 @@ private:
     QLineEdit *PointsLineEYmin;
     QLineEdit *PointsLineEYmax;
     QSlider *DepthSlider;
+    QLabel *DepthLabelSlider;
     QCheckBox *DepthCBenvio;
     QCheckBox *DepthCBcomprimido;
     QSlider *VideoSlider;
+    QLabel *VideoLabelSlider;
     QCheckBox *VideoCBenvio;
     QCheckBox *VideoCBcomprimido;
     QButtonGroup *ledGroup;
