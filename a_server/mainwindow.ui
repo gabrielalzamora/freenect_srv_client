@@ -317,15 +317,15 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>FrameGL</class>
-   <extends>QOpenGLWidget</extends>
-   <header location="global">framegl.h</header>
-  </customwidget>
-  <customwidget>
    <class>Data</class>
    <extends>QWidget</extends>
    <header location="global">data.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>FrameGL</class>
+   <extends>QOpenGLWidget</extends>
+   <header location="global">framegl.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

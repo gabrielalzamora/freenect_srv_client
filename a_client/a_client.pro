@@ -17,7 +17,8 @@ SOURCES += main.cpp\
            data.cpp
 
 HEADERS  += mainwindow.h\
-            data.h
+            data.h \
+            typekinect.h
 
 FORMS    += mainwindow.ui
 

@@ -23,7 +23,8 @@ HEADERS  += mainwindow.h \
             apikinect.h \
             attendclient.h \
             framegl.h \
-            data.h
+            data.h \
+    typekinect.h
 
 FORMS    += mainwindow.ui
 

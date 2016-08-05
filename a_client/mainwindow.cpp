@@ -13,6 +13,22 @@
 #define BARRIDOPORT 10008
 #define ACCELPORT 10009
 
+/*!
+ * \class MainWindow
+ *
+ */
+
+/*!
+ * \brief MainWindow::MainWindow constructor
+ *
+ * MainWindow constructor starts sockets and graphics
+ * objects to show data on gui and inherit ui class
+ * ( in mainwindow.ui ) that contain buttons, menus,
+ *  text edit... to interact.
+ * ui->tab_2 is programmed in Data class
+ * \param parent
+ * not used
+ */
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -50,7 +66,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(skt_video,SIGNAL(readyRead()),this,SLOT(readDataVideo()));
     connect(skt_depth,SIGNAL(readyRead()),this,SLOT(readDataDepth()));
 }
-
+/*!
+ * \brief MainWindow::~MainWindow destructor
+ * to free memory and close properly
+ */
 MainWindow::~MainWindow()
 {
     delete ui;
@@ -60,22 +79,22 @@ MainWindow::~MainWindow()
     //...
 }
 
-/**
- * @brief MainWindow::setHost
+/*!
+ * \brief MainWindow::setHost
  * auxiliary function to set server host
  */
 void MainWindow::setHost()
 {
 //    ui->lineEdit->setText("192.168.1.34");///-----------------DEBUG
-//    ui->lineEdit->setText("192.168.0.157");///-----------------DEBUG
-    ui->lineEdit->setText("127.0.0.1");///-----------------DEBUG
+    ui->lineEdit->setText("192.168.0.157");///-----------------DEBUG
+//    ui->lineEdit->setText("127.0.0.1");///-----------------DEBUG
     hostAddr = QHostAddress(ui->lineEdit->text());
 //    ui->textBrowser->setText(ui->lineEdit->text());
     ui->pbGo->setEnabled(true);
 }
 
-/**
- * @brief MainWindow::dataChanged
+/*!
+ * \brief MainWindow::dataChanged
  */
 void MainWindow::dataChanged()
 {
@@ -112,9 +131,8 @@ void MainWindow::dataChanged()
     qDebug("  init tamaño enviado: %u", (buff.size()-sizeof(quint64)));//DEBUG
 }
 
-
-/**
- * @brief MainWindow::initConnection
+/*!
+ * \brief MainWindow::initConnection
  * connect to server and srvKinect update comm
  */
 void MainWindow::initConnection()
@@ -138,8 +156,8 @@ void MainWindow::initConnection()
     qDebug("  client connected = %d",connectedServer);
 }
 
-/**
- * @brief MainWindow::closeConnection
+/*!
+ * \brief MainWindow::closeConnection
  * disconnect from server all sockets & close
  */
 void MainWindow::closeConnection()
@@ -165,8 +183,8 @@ void MainWindow::socketErrorVideo()
 
 }
 
-/**
- * @brief MainWindow::initVideo
+/*!
+ * \brief MainWindow::initVideo
  * start video connection to server
  * clicked twice stops video
  */
@@ -198,8 +216,8 @@ void MainWindow::initVideo()
     skt_video->write(buff);
     qDebug("  init tamaño enviado: %u", (buff.size()-sizeof(quint64)));//DEBUG
 }
-/**
- * @brief MainWindow::finalizeVideo
+/*!
+ * \brief MainWindow::finalizeVideo
  * stop video connection to server
  */
 void MainWindow::finalizeVideo()
@@ -220,8 +238,8 @@ void MainWindow::finalizeVideo()
     skt_video->disconnectFromHost();
     connectedVideo = 0;
 }
-/**
- * @brief MainWindow::readDataVideo
+/*!
+ * \brief MainWindow::readDataVideo
  * read video data and show on gui
  */
 void MainWindow::readDataVideo()
@@ -264,8 +282,8 @@ void MainWindow::readDataVideo()
     sizeVideo = 0;//to allow get next img sizeVideo
 }
 
-/**
- * @brief MainWindow::initDepth
+/*!
+ * \brief MainWindow::initDepth
  * start depth connection to server
  * clicked twice stops depth
  */
@@ -297,8 +315,8 @@ void MainWindow::initDepth()
     skt_depth->write(buff);
     qDebug("  init depth tamaño enviado: %u", (buff.size()-sizeof(quint64)));//DEBUG
 }
-/**
- * @brief MainWindow::finalizeDepth
+/*!
+ * \brief MainWindow::finalizeDepth
  * stop depth connection to server
  */
 void MainWindow::finalizeDepth()
@@ -319,8 +337,8 @@ void MainWindow::finalizeDepth()
     skt_depth->disconnectFromHost();
     connectedDepth = 0;
 }
-/**
- * @brief MainWindow::readDataDepth
+/*!
+ * \brief MainWindow::readDataDepth
  * read depth data and show on gui
  */
 void MainWindow::readDataDepth()
