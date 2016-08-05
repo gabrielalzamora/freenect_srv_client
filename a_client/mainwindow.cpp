@@ -54,8 +54,8 @@ MainWindow::MainWindow(QWidget *parent) :
     itemDepth = NULL;
     //depthImg = QImage(W,H,QImage::Format_RGB16);
 
-//    connect(ui->lineEdit,SIGNAL(editingFinished()),this,SLOT(setHost()));
-    setHost();///----------------------------DEBUG
+    connect(ui->lineEdit,SIGNAL(editingFinished()),this,SLOT(setHost()));
+//    setHost();///----------------------------DEBUG
 
     connect(ui->pbGo,SIGNAL(released()),this,SLOT(initConnection()));
     connect(ui->pbStop,SIGNAL(released()),this,SLOT(closeConnection()));
@@ -86,10 +86,11 @@ MainWindow::~MainWindow()
 void MainWindow::setHost()
 {
 //    ui->lineEdit->setText("192.168.1.34");///-----------------DEBUG
-    ui->lineEdit->setText("192.168.0.157");///-----------------DEBUG
+//    ui->lineEdit->setText("192.168.0.157");///-----------------DEBUG
 //    ui->lineEdit->setText("127.0.0.1");///-----------------DEBUG
     hostAddr = QHostAddress(ui->lineEdit->text());
-//    ui->textBrowser->setText(ui->lineEdit->text());
+    ui->textBrowser->setText("connect to server ip:");
+    ui->textBrowser->append(ui->lineEdit->text());
     ui->pbGo->setEnabled(true);
 }
 
