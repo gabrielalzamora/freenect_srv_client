@@ -10,7 +10,19 @@
 #define BARRIDOPORT 10008
 #define ACCELPORT 10009
 
+/*!
+ * \class AttendClient
+ * \brief is created for each client connected to server.
+ *
+ * Handle all comunications between server and client
+ */
 
+/*!
+ * \brief constructor
+ * \param socket
+ * \param ptrToBuffers
+ * \param parent
+ */
 AttendClient::AttendClient(QTcpSocket *socket, pBuf *ptrToBuffers, QObject *parent) : QObject(parent)
 {
     qDebug("AttendClient::AttendClient");
@@ -30,24 +42,9 @@ AttendClient::AttendClient(QTcpSocket *socket, pBuf *ptrToBuffers, QObject *pare
 
     startServers();
 }
-/**--------------------------overloaded DEBUG
- * @brief AttendClient::AttendClient--------------------------overloaded DEBUG
+/*!
+ * \brief destructor
  */
-/*
-AttendClient::AttendClient(QTcpSocket *socket, std::vector<uint8_t> &vectorVideo, QObject *parent) : QObject(parent)
-{
-    qDebug("AttendClient::AttendClient");
-    peerAddr = socket->peerAddress();
-    peerPort = socket->peerPort();
-    m_socket = socket;
-    m_vectorVideo = vectorVideo;
-    connect(m_socket,SIGNAL(readyRead()),this,SLOT(readSrvKdata()));
-    qDebug() << "  peerAddr = " << peerAddr.toString();
-    qDebug("  peerPort = %u",peerPort);
-
-    startServers();
-}
-*/
 AttendClient::~AttendClient()
 {
     if(s_video->isListening()){
@@ -105,9 +102,8 @@ AttendClient::~AttendClient()
         s_accel->disconnect();
     }
 }
-/**
- * @brief AttendClient::startServers
- * start servers that will attend client
+/*!
+ * \brief create servers to listen client
  */
 void AttendClient::startServers()
 {
@@ -141,9 +137,8 @@ void AttendClient::startServers()
 
     sizeSrvK = sizeVideo = sizeDepth = size3d = size2d = sizeBarrido = sizeAccel = 0;
 }
-/**
- * @brief AttendClient::readSrvKdata
- * read srvKinect new value when sended by client
+/*!
+ * \brief read srvKinect new value when sended by client
  */
 void AttendClient::readSrvKdata()
 {
@@ -195,18 +190,16 @@ void AttendClient::readSrvKdata()
     sizeSrvK = 0;//to allow reading next message size
 }
 
-/**
- * @brief AttendClient::incomingVideo
- * incoming connection bind to a socket in order to I/O data
+/*!
+ * \brief incoming connection bind to a socket in order to I/O data
  */
 void AttendClient::incomingVideo()
 {
     skt_video = s_video->nextPendingConnection();
     connect(skt_video,SIGNAL(readyRead()),this,SLOT(sendVideo()));
 }
-/**
- * @brief AttendClient::sendVideo
- * send video frame (image) through skt_video to client
+/*!
+ * \brief send video frame (image) through skt_video to client
  */
 void AttendClient::sendVideo()
 {
@@ -254,18 +247,16 @@ void AttendClient::sendVideo()
     skt_video->write(buff);//enviamos
 }
 
-/**
- * @brief AttendClient::incomingDepth
- * incoming connection bind to a socket in order to I/O data
+/*!
+ * \brief incoming connection bind to a socket in order to I/O data
  */
 void AttendClient::incomingDepth()
 {
     skt_depth = s_depth->nextPendingConnection();
     connect(skt_depth,SIGNAL(readyRead()),this,SLOT(sendDepth()));
 }
-/**
- * @brief AttendClient::sendDepth
- * send depth frame (image) through skt_depth to client
+/*!
+ * \brief send depth frame (image) through skt_depth to client
  */
 void AttendClient::sendDepth()
 {

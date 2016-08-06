@@ -4,27 +4,53 @@
 #include <cstdint>
 #include <vector>
 
-typedef struct tagRGBQ{
-    uint8_t rgbRed;
-    uint8_t rgbGreen;
-    uint8_t rgbBlue;
-    uint8_t rgbReserved;
+/*!
+ * \struct RGBQ
+ * \brief color in RGB style 32bits long.
+ *
+ *
+ */
+typedef struct RGBQ{
+    uint8_t rgbRed;//!< red color component of RGB.
+    uint8_t rgbGreen;//!< green color component of RGB.
+    uint8_t rgbBlue;//!< blue color component of RGB.
+    uint8_t rgbReserved;//!< reserved for future use.
 }RGBQ;
 
-typedef struct punto3DyColor{
-    int16_t x;
+/*!
+ * \struct point3c
+ * \brief 3D point with color information.
+ *
+ * Represents position and color of a point
+ * in 3D space with distance in milimeters (mm)
+ * and color as RGBQ color.
+ */
+typedef struct point3c{
+    int16_t x;//!< sigue cuando te estanques en otra cosa
     int16_t y;
     int16_t z;
     RGBQ color;
 }point3c;
 
-typedef struct punto2D{
+/*!
+ * \struct point2
+ * \brief 2D point on horizontal plane.
+ */
+typedef struct point2{
     int16_t x;
     int16_t z;
 }point2;
 
-typedef struct SrvKinect{
-    double m_fAngulo;
+/*!
+ * \struct srvKinect
+ * \brief contain all Data information (but led).
+ *
+ * Used as database but mainly to send information from
+ * client to server, change kinect camera angle remotely
+ * and update which data to be sent, limits, refresh...
+ */
+typedef struct srvKinect{
+    double m_fAngulo;//!< angle (degrees) with horizontal plane of kinect base.
     int8_t m_iAnguloKinect;
     double m_fAltura;
     double m_fYMin;
@@ -47,7 +73,11 @@ typedef struct SrvKinect{
     uint8_t m_bCompressColor;
 }srvKinect;
 
-typedef struct ptrBuf{
+/*!
+ * \struct pBuf busca ejemplos en manual Doxygen
+ * \brief holds pointers to all kinect and derived data
+ */
+typedef struct pBuf{
     std::vector<uint8_t> *ptrVideoBuf;///< container of video info from kinect
     std::vector<uint16_t> *ptrDepthBuf;///< container of depth info from kinect
     std::vector<point3c> *ptrP3Buf;///< container of points cloud <- video+depth

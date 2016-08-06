@@ -26,7 +26,6 @@ public:
 
 signals:
 
-
 public slots:
     void videoDataReady();//print videoBuf
     void depthDataReady();//print depthBuf
@@ -45,6 +44,10 @@ private slots:
     void loop();
     void stoploop();
     void printTimeVector(std::vector<int> &timeV);
+    void getAll();
+    void get3D();
+    void get2D();
+    void getBarrido();
     //gui
     void on_pbGo_clicked();
     void on_pbStop_clicked();
@@ -89,7 +92,5 @@ private:
     std::vector<AttendClient*> attendClients;///< active AttendClient (to access them)
 
     std::vector<int> timeVector;//msecs
-
 };
-
 #endif // MAINWINDOW_H

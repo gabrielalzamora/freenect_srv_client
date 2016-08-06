@@ -1,11 +1,17 @@
+
+
 #include <math.h>       // sqrt(), atan()
 #include "apikinect.h"
 
+/*!
+ * \class Apikinect
+ * \brief holds all kinect device properties to read & handel it.
+ */
 
-/**
- * @brief Apikinect::Apikinect holds all kinect device properties to read & handel it
- * @param _ctx
- * @param _index
+/*!
+ * \brief Apikinect::Apikinect reserve memory and set initial flags
+ * \param _ctx
+ * \param _index
  */
 Apikinect::Apikinect(freenect_context *_ctx, int _index)
     : Freenect::FreenectDevice(_ctx, _index),
@@ -18,10 +24,10 @@ Apikinect::Apikinect(freenect_context *_ctx, int _index)
     m_buffer_B.resize(360);
 }
 
-/**
- * @brief Apikinect::VideoCallback is called if usb video event in Freenect::m_thread
- * @param _rgb      points buffer where to save usb incoming video frame
- * @param timestamp
+/*!
+ * \brief Apikinect::VideoCallback is called if usb video event in Freenect::m_thread
+ * \param _rgb      points buffer where to save usb incoming video frame
+ * \param timestamp internal use
  */
 void Apikinect::VideoCallback(void *_rgb, uint32_t timestamp)
 {
@@ -31,10 +37,10 @@ void Apikinect::VideoCallback(void *_rgb, uint32_t timestamp)
     m_new_rgb_frame = true;
 }
 
-/**
- * @brief Apikinect::DepthCallback is called if usb depth event in Freenect::m_thread
- * @param _depth    points buffer shere to save usb incoming depth frame
- * @param timestamp
+/*!
+ * \brief Apikinect::DepthCallback is called if usb depth event in Freenect::m_thread
+ * \param _depth    points buffer shere to save usb incoming depth frame
+ * \param timestamp internal use
  */
 void Apikinect::DepthCallback(void *_depth, uint32_t timestamp)
 {
@@ -44,10 +50,10 @@ void Apikinect::DepthCallback(void *_depth, uint32_t timestamp)
     m_new_depth_frame = true;
 }
 
-/**
- * @brief Apikinect::getRGB retrieve video frame
- * @param buffer    point to buffer where new video frame is stored
- * @return          true if we have new video frame, false if not new
+/*!
+ * \brief Apikinect::getRGB retrieve video frame
+ * \param buffer    point to buffer where new video frame is stored
+ * \return          true if we have new video frame, false if not new
  */
 bool Apikinect::getRGB(std::vector<uint8_t> &buffer)
 {
@@ -59,10 +65,10 @@ bool Apikinect::getRGB(std::vector<uint8_t> &buffer)
     return true;
 }
 
-/**
- * @brief Apikinect::getDepth retrieve depth frame
- * @param buffer    point to buffer where new depth frame is stored
- * @return          true if we have new depth frame, false if not new
+/*!
+ * \brief Apikinect::getDepth retrieve depth frame
+ * \param buffer    point to buffer where new depth frame is stored
+ * \return          true if we have new depth frame, false if not new
  */
 bool Apikinect::getDepth(std::vector<uint16_t> &buffer)
 {
@@ -74,11 +80,11 @@ bool Apikinect::getDepth(std::vector<uint16_t> &buffer)
     return true;
 }
 
-/**
- * @brief Apikinect::getAll
+/*!
+ * \brief Apikinect::getAll
  * funtion to retrieve point cloud & swetp ("barre") from video & depth data
- * @param buffer3 buffer to receive point cloud
- * @param bufferB buffer to receive swept ("barre")
+ * \param buffer3 buffer to receive point cloud
+ * \param bufferB buffer to receive swept ("barre")
  */
 void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &bufferB)
 {
@@ -110,11 +116,11 @@ void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &buf
     }//----------------------------------------------------------time post buffers
 }
 
-/**
- * @brief Apikinect::get3d
+/*!
+ * \brief Apikinect::get3d
  * 3 dimention + color point cloud in buffer from video & depth data
- * @param buffer  where point cloud is stored
- * @return number of point3d in buffer = buffer.size()
+ * \param buffer  where point cloud is stored
+ * \return number of point3d in buffer = buffer.size()
  */
 int Apikinect::get3d(std::vector<point3c> &buffer)
 {
@@ -140,11 +146,11 @@ int Apikinect::get3d(std::vector<point3c> &buffer)
     return buffer.size();
 }
 
-/**
- * @brief Apikinect::get2
+/*!
+ * \brief Apikinect::get2
  * 2 dimention point cloud in buffer from video & depth data
- * @param buffer where point cloud is stored
- * @return number of point2d in buffer = buffer.size()
+ * \param buffer where point cloud is stored
+ * \return number of point2d in buffer = buffer.size()
  */
 int Apikinect::get2(std::vector<point2> &buffer)
 {
@@ -163,12 +169,12 @@ int Apikinect::get2(std::vector<point2> &buffer)
     return buffer.size();
 }
 
-/**
- * @brief Apikinect::getBarrer
+/*!
+ * \brief Apikinect::getBarrer
  * 360 vector with distance at each angle 0º where camara is centered
  * and from -89.5º to 90º each 1/2 degree (180*2=360 values)
- * @param buffer where 360 distance values are stored
- * @return number of points should be 360=buffer.size()
+ * \param buffer where 360 distance values are stored
+ * \return number of points should be 360=buffer.size()
  */
 int Apikinect::getBarrido(std::vector<uint32_t> &buffer)
 {

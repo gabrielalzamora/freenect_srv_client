@@ -3,6 +3,19 @@
 #include <QWheelEvent>
 #include "framegl.h"
 
+/*!
+ * \class FrameGL
+ * \brief paint 3D point cloud on QOpenGLWidget.
+ *
+ * QOpenGLWidget should inherit from this class to allow
+ * mouse interaction with plotted cloud turning the image
+ * as you drag over it.
+ */
+
+/*!
+ * \brief FrameGL::FrameGL
+ * \param parent
+ */
 FrameGL::FrameGL(QWidget *parent) : QOpenGLWidget(parent)
 {
 //    xRot = yRot = zRot = 0;
@@ -11,23 +24,25 @@ FrameGL::FrameGL(QWidget *parent) : QOpenGLWidget(parent)
     pCloud.resize(0);
     sizeCloud=0;
 }
-
+/*!
+ * \brief FrameGL::~FrameGL
+ */
 FrameGL::~FrameGL()
 {
 }
-/**
- * @brief FrameGL::minimumSizeHint
+/*!
+ * \brief FrameGL::minimumSizeHint
  * QT auxiliari function to keep item size when resizing
- * @return QSize minimum size to shrink item
+ * \return QSize minimum size to shrink item
  */
 QSize FrameGL::minimumSizeHint() const
 {
     return QSize(320,240);
 }
-/**
- * @brief FrameGL::sizeHint
+/*!
+ * \brief FrameGL::sizeHint
  * QT auxiliari function to keep item size when resizing
- * @return QSize  ideal size to show item
+ * \return QSize  ideal size to show item
  */
 QSize FrameGL::sizeHint() const
 {
@@ -43,19 +58,19 @@ void FrameGL::rotateBy(int xAngle, int yAngle, int zAngle)
     update();
 }*/
 
-/**
- * @brief FrameGL::setClearColor set color to repaint
- * @param color
+/*!
+ * \brief FrameGL::setClearColor set color to repaint
+ * \param color
  */
 void FrameGL::setClearColor(const QColor &color)
 {
     clearColor = color;
     update();
 }
-/**
- * @brief FrameGL::setpCloud
- * @param c
- * @param count
+/*!
+ * \brief FrameGL::setpCloud
+ * \param c
+ * \param count
  */
 void FrameGL::setpCloud(std::vector<point3c> c, int count)
 {
@@ -63,28 +78,27 @@ void FrameGL::setpCloud(std::vector<point3c> c, int count)
     std::lock_guard<std::mutex> lock(mtxCloud);//actually not necesary, its the only fuction writting on pCloud
     pCloud=c;
 }
-/**
- * @brief FrameGL::initializeGL
+/*!
+ * \brief FrameGL::initializeGL
  */
 void FrameGL::initializeGL()
 {
     glClearColor(0.8313f, 0.9450f, 0.9607f, 1.0f );
     glEnable(GL_DEPTH_TEST);
-    GLfloat fMaxObjSize, fAspect, fNearPlane, fFarPlane;
+    GLfloat fAspect, fNearPlane, fFarPlane;
     glClearDepth(1.0f);
     fAspect = 1.0f;
-    fNearPlane = 1.0f;
-    fFarPlane = 100000.0f;
-    fMaxObjSize = 3.0f;
+    fNearPlane = 900.0f;
+    fFarPlane = 11000.0f;
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    //gluPerspective(45.0f, fAspect, fNearPlane, fFarPlane);
-    gluPerspective(50.0,1.0,900.0,11000.0);
+    gluPerspective(50.0f, fAspect, fNearPlane, fFarPlane);
+    //gluPerspective(50.0,1.0,900.0,11000.0);
     glMatrixMode(GL_MODELVIEW);
 }
-/**
- * @brief FrameGL::paintGL
- * where points are draw and point of view set
+/*!
+ * \brief FrameGL::paintGL
+ * where points are draw and point of view set.
  */
 void FrameGL::paintGL()
 {
@@ -110,28 +124,28 @@ void FrameGL::paintGL()
 
     glPopMatrix();
 }
-/**
- * @brief FrameGL::resizeGL
- * @param width
- * @param height
+/*!
+ * \brief FrameGL::resizeGL
+ * \param width
+ * \param height
  */
 void FrameGL::resizeGL(int width, int height)
 {
     int side = qMin(width, height);
     glViewport((width - side) / 2, (height - side) / 2, side, side);
 }
-/**
- * @brief FrameGL::mousePressEvent
- * @param event
+/*!
+ * \brief FrameGL::mousePressEvent
+ * \param event
  */
 void FrameGL::mousePressEvent(QMouseEvent *event)
 {
     lastPosition = event->pos();
 }
-/**
- * @brief FrameGL::mouseMoveEvent
+/*!
+ * \brief FrameGL::mouseMoveEvent
  * to change point of view of 3D image with drag&drop
- * @param event
+ * \param event
  */
 void FrameGL::mouseMoveEvent(QMouseEvent *event)
 {
@@ -141,10 +155,10 @@ void FrameGL::mouseMoveEvent(QMouseEvent *event)
     }
     lastPosition = event->pos();
 }
-/**
- * @brief FrameGL::wheelEvent
+/*!
+ * \brief FrameGL::wheelEvent
  * if wheel rotate zooms FrameGL
- * @param event
+ * \param event
  */
 void FrameGL::wheelEvent(QWheelEvent *event)
 {
@@ -156,17 +170,17 @@ void FrameGL::wheelEvent(QWheelEvent *event)
     }
     event->accept();
 }
-/**
- * @brief FrameGL::mouseReleaseEvent
+/*!
+ * \brief FrameGL::mouseReleaseEvent
  * to shot drag&drop signal to calculate move event
- * @param event
+ * \param event
  */
 void FrameGL::mouseReleaseEvent(QMouseEvent *event)
 {
     emit clicked();
 }
-/**
- * @brief FrameGL::drawCloud  draw points cloud
+/*!
+ * \brief FrameGL::drawCloud  draw points cloud
  */
 void FrameGL::drawCloud()
 {
@@ -180,8 +194,8 @@ void FrameGL::drawCloud()
         }
     glEnd();
 }
-/**
- * @brief FrameGL::drawAxis
+/*!
+ * \brief FrameGL::drawAxis
  * Ox red, Oy green and Oz blue
  */
 void FrameGL::drawAxis()
@@ -200,8 +214,8 @@ void FrameGL::drawAxis()
         glVertex3f(0.0,0.0,500.0);
     glEnd();
 }
-/**
- * @brief FrameGL::drawLines
+/*!
+ * \brief FrameGL::drawLines
  * draw auxiliary lines paralel to axis
  */
 void FrameGL::drawLines()

@@ -1,4 +1,7 @@
-
+/*
+ * Copyright (c) 2015  Gabriel Alzamora
+ * Copyright (c) 2015 The Qt Company Ltd
+ */
 
 #include <QNetworkInterface>
 #include "mainwindow.h"
@@ -7,6 +10,28 @@
 
 #define SRVKPORT 10003
 
+/*!
+ * \class MainWindow
+ * \brief holds all server functionality.
+ *
+ * Through members that are type Apikinect, AttendClient,
+ * Ui_MainWindow (ui), Data (ui->tab_2),FrameGL (ui->glWidget),
+ * QTcpServer and Freenect::Freenect manage kinect and client
+ * relations.
+ * Apikinect allow to handle and comunicate with kinect.
+ * Ui_MainWindow (ui) is the graphic interface.
+ * Data (ui->tab_2) holds configuration to handle data.
+ * FrameGL (ui->glWidget) all related to 3D view.
+ * QTcpServer is the server who listen to incoming clients.
+ * Freenect::Freenect will hold usb context on kinect communication.
+ * Apikinect hold single kinect (device) comunication.
+ * AttendClient is generated to attend single client communication.
+ */
+
+/*!
+ * \brief MainWindow::MainWindow
+ * \param parent
+ */
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -23,7 +48,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->tab_2,SIGNAL(dataChanged()),this,SLOT(updateKinect()));
     connect(ui->tab_2,SIGNAL(ledOptionChanged()),this,SLOT(updateKinect()));
 }
-
+/*!
+ * \brief MainWindow::~MainWindow
+ */
 MainWindow::~MainWindow()
 {
     if(currentDeviceIndex !=-1){
@@ -38,10 +65,10 @@ MainWindow::~MainWindow()
     if( imgBarre != NULL ) delete imgBarre;
     delete ui;
 }
-/**
- * @brief MainWindow::videoDataReady
+/*!
+ * \brief MainWindow::videoDataReady
  * draw video image (on ui->gvVideo sceneVideo using data from buf vector)
- * @param buf
+ * \param buf
  */
 void MainWindow::videoDataReady()
 {
@@ -50,10 +77,10 @@ void MainWindow::videoDataReady()
     sceneVideo->addPixmap(QPixmap::fromImage(*imgVideo).scaled(320,240,Qt::KeepAspectRatio));
     ui->gvVideo->show();
 }
-/**
- * @brief MainWindow::depthDataReady
- * draw depth image (on ui->gvDepth sceneDepth using data from buf vector)
- * @param buf
+/*!
+ * \brief MainWindow::depthDataReady
+ * draw depth image (on ui->gvDepth sceneDepth using data from buf vector).
+ * \param buf
  */
 void MainWindow::depthDataReady()
 {
@@ -71,8 +98,8 @@ void MainWindow::depthDataReady()
     sceneDepth->addPixmap(QPixmap::fromImage(*imgDepth).scaled(320,240,Qt::KeepAspectRatio));
     ui->gvDepth->show();
 }
-/**
- * @brief MainWindow::barreDataReady
+/*!
+ * \brief MainWindow::barreDataReady
  * draw barrido (barre) (on ui->gvBarre sceneBarre using
  */
 void MainWindow::barridoDataReady()
@@ -96,25 +123,25 @@ void MainWindow::barridoDataReady()
     }
     ui->gvBarre->show();
 }
-/**
- * @brief MainWindow::barreInit
- * draw axes on sceneBarre to show on gvBarre
+/*!
+ * \brief MainWindow::barreInit
+ * draw axes on sceneBarre to show on gvBarre.
  */
 void MainWindow::barridoInit()
 {
     ui->gvBarre->setBackgroundBrush(QColor(200,240,240,255));//light blue
     sceneBarre->setBackgroundBrush(QColor(200,240,240,255));
-    QPen ejesPen = QPen(QColor(0,0,0,255));//black
+    QPen ejesPen = QPen(QColor(255,0,0,255));//red color
     ejesPen.setWidth(2);
     QLine ejex = QLine(5,230,315,230);
     QLine ejey = QLine(160,230,160,5);
+    //pinta escala cada ~500mm
     sceneBarre->addLine(ejex,ejesPen);
     sceneBarre->addLine(ejey,ejesPen);
-
 }
-/**
- * @brief MainWindow::updateKinect
- * set current led option and angle on active kinect
+/*!
+ * \brief MainWindow::updateKinect
+ * set current led option and kinect angle on active kinect.
  */
 void MainWindow::updateKinect()
 {
@@ -123,10 +150,10 @@ void MainWindow::updateKinect()
         device->setTiltDegrees(double(ui->tab_2->m_srvK.m_iAnguloKinect));
     }
 }
-/**
- * @brief MainWindow::updateSrvKinect
+/*!
+ * \brief MainWindow::updateSrvKinect
  * set srvKinect data sended by client
- * @param sk
+ * \param sk
  * [in] client current srvKinect
  */
 void MainWindow::updateSrvKinect(srvKinect newSrvK)
@@ -181,8 +208,8 @@ void MainWindow::updateSrvKinect(srvKinect newSrvK)
     emit updateKinect();
 }
 
-/**
- * @brief MainWindow::init
+/*!
+ * \brief MainWindow::init
  * convenience function to initiate members
  */
 void MainWindow::init()
@@ -220,8 +247,8 @@ void MainWindow::init()
     //server
     mainServer = new QTcpServer(this);
 }
-/**
- * @brief MainWindow::setServerIp
+/*!
+ * \brief MainWindow::setServerIp
  * write my server ip on gui label
  */
 void MainWindow::setServerIp()
@@ -239,8 +266,8 @@ void MainWindow::setServerIp()
     if (ip.isEmpty()) ip = QHostAddress(QHostAddress::LocalHost).toString();
     ui->label_ip->setText(ip);
 }
-/**
- * @brief MainWindow::putKcombo
+/*!
+ * \brief MainWindow::putKcombo
  * fill combo list with detected kinect index
  */
 void MainWindow::putKcombo()
@@ -260,10 +287,10 @@ void MainWindow::putKcombo()
     }
 }
 
-/**
- * @brief MainWindow::startK
+/*!
+ * \brief MainWindow::startK
  * init device to handle kinect of indexK
- * @param indexK
+ * \param indexK
  */
 void MainWindow::startK(int indexK)
 {
@@ -272,9 +299,9 @@ void MainWindow::startK(int indexK)
     device->startDepth();
     currentDeviceIndex = indexK;
 }
-/**
- * @brief MainWindow::stopK destroy kinect handler
- * @param index index kinect handler index to be destroyed
+/*!
+ * \brief MainWindow::stopK destroy kinect handler
+ * \param index index kinect handler index to be destroyed
  */
 void MainWindow::stopK(int indexK)
 {
@@ -284,8 +311,8 @@ void MainWindow::stopK(int indexK)
     currentDeviceIndex = -1;
     device = NULL;
 }
-/**
- * @brief MainWindow::loop
+/*!
+ * \brief MainWindow::loop
  * working horse retrieving video & depth info
  * and pouring it to p3Buf (point cloud: 3D+color)
  */
@@ -345,18 +372,18 @@ void MainWindow::loop()
         qApp->processEvents();//stay responsive to button click
     }
 }
-/**
- * @brief MainWindow::stoploop
+/*!
+ * \brief MainWindow::stoploop
  * convinience funtion to stop loop seting wile(flag)=0
  */
 void MainWindow::stoploop()
 {
     flag = 0;
 }
-/**
- * @brief MainWindow::printTimeVector
+/*!
+ * \brief MainWindow::printTimeVector
  * aux function to control time spend in calculus or painting
- * @param timeV
+ * \param timeV
  * vector to save data
  */
 void MainWindow::printTimeVector(std::vector<int> &timeV)
@@ -384,8 +411,28 @@ void MainWindow::printTimeVector(std::vector<int> &timeV)
     ui->textEdit->setText(str);
 }
 
-/**
- * @brief MainWindow::on_pbGo_clicked start selected kinect data flow
+void MainWindow::getAll()///-------probar exhaustívamente-------------DEBUG
+{
+
+}
+
+void MainWindow::get3D()
+{
+
+}
+
+void MainWindow::get2D()
+{
+
+}
+
+void MainWindow::getBarrido()
+{
+
+}
+
+/*!
+ * \brief MainWindow::on_pbGo_clicked start selected kinect data flow
  */
 void MainWindow::on_pbGo_clicked()///--------------------------DEBUG
 {
@@ -395,8 +442,8 @@ void MainWindow::on_pbGo_clicked()///--------------------------DEBUG
     currentDeviceIndex = index;
     //loop();
 }
-/**
- * @brief MainWindow::on_pbStop_clicked stop kinect data flow and delete handler
+/*!
+ * \brief MainWindow::on_pbStop_clicked stop kinect data flow and delete handler
  */
 void MainWindow::on_pbStop_clicked()
 {
@@ -407,10 +454,10 @@ void MainWindow::on_pbStop_clicked()
         stopK(index);
     }
 }
-/**
- * @brief MainWindow::on_combo_activated
+/*!
+ * \brief MainWindow::on_combo_activated
  * when combo item selected -> buttons activated
- * @param index
+ * \param index
  */
 void MainWindow::on_combo_activated(const QString &arg1)
 {
@@ -430,8 +477,8 @@ void MainWindow::on_combo_activated(const QString &arg1)
     }
 }
 
-/**
- * @brief MainWindow::startServer
+/*!
+ * \brief MainWindow::startServer
  * start QTcpServer listening at port 9999 and connect to attendNewClient()
  */
 void MainWindow::startServer()
@@ -444,8 +491,8 @@ void MainWindow::startServer()
 
     connect(mainServer, SIGNAL(newConnection()), this, SLOT(attendNewClient()));
 }
-/**
- * @brief MainWindow::attendNewClient
+/*!
+ * \brief MainWindow::attendNewClient
  * when client connection incoming create a new AttendClient and bind
  */
 void MainWindow::attendNewClient()///------test with concurrent clients----------DEBUG
@@ -458,10 +505,10 @@ void MainWindow::attendNewClient()///------test with concurrent clients---------
     connect(attendant,SIGNAL(newSrvKinect(srvKinect)),this,SLOT(updateSrvKinect(srvKinect)));
 }
 
-/**
- * @brief MainWindow::closeEvent
- * override window close event to stop loop and delete apikinect handler
- * @param event
+/*!
+ * \brief MainWindow::closeEvent
+ * override window close event to stop loop and delete apikinect handler.
+ * \param event
  */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
