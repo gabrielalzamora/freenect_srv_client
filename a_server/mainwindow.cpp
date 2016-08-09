@@ -1,6 +1,11 @@
 /*
- * Copyright (c) 2015  Gabriel Alzamora
+ * Copyright (c) 2016  Gabriel Alzamora
  * Copyright (c) 2015 The Qt Company Ltd
+ *
+ * This code is licensed to you under the terms of the
+ * GNU General Public License. See LICENSE file for the
+ * text of the license, or the following URL:
+ * https://www.gnu.org/licenses/gpl.html
  */
 
 #include <QNetworkInterface>
@@ -413,22 +418,91 @@ void MainWindow::printTimeVector(std::vector<int> &timeV)
 
 void MainWindow::getAll()///-------probar exhaustívamente-------------DEBUG
 {
+    point3c p3;
+    RGBQ color;///-----------------------------------------------------------CORREGIR
+    p3Buf.resize(1);///------------------------------resize(0)--------DEBUG
+    for(int i=0;i<360;i++) barridoBuf[i]=0;
 
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
+    //------------------------------------------------------time pre buffers
+    for (int i = 0; i < 480*640; ++i)
+    {
+        // Convert from image plane coordinates to world coordinates
+        if( (p3.z = depthBuf[i]) != 0  ){                  // Z = d
+            p3.x = (i%640-(640-1)/2.f)*depthBuf[i]/f;      // X = (x - cx) * d / fx
+            p3.y = (i/640 - (480-1)/2.f) * depthBuf[i] / f;// Y = (y - cy) * d / fy
+            color.rgbRed = videoBuf[3*i+0];    // R
+            color.rgbGreen = videoBuf[3*i+1];  // G
+            color.rgbBlue = videoBuf[3*i+2];   // B
+            color.rgbReserved = 0;
+            p3.color = color;
+            p3Buf.push_back(p3);//MainWindow::p3Buf
+//time pre barrer
+            int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
+            uint32_t length = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
+            if( barridoBuf[index]==0 || barridoBuf[index]>length)
+                barridoBuf[index]=length;
+//time post barrer  difference*numpoints = time barrer
+        }
+    }//----------------------------------------------------------time post buffers
 }
 
 void MainWindow::get3D()
 {
+    point3c p3;
+    RGBQ color;
 
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
+//time pre buffers
+    for (int i = 0; i < 480*640; ++i)///-----------------------------------CORREGIR
+    {
+        // Convert from image plane coordinates to world coordinates
+        if( (p3.z = depthBuf[i]) != 0  ){                  // Z = d
+            p3.x = (i%640-(640-1)/2.f)*depthBuf[i]/f;      // X = (x - cx) * d / fx
+            p3.y = (i/640 - (480-1)/2.f) * depthBuf[i] / f;// Y = (y - cy) * d / fy
+            color.rgbRed = videoBuf[3*i+0];    // R
+            color.rgbGreen = videoBuf[3*i+1];  // G
+            color.rgbBlue = videoBuf[3*i+2];   // B
+            color.rgbReserved = 0;
+            p3.color = color;
+            p3Buf.push_back(p3);//MainWindow::p3Buf
+        }
+    }
+//time post buffers
 }
 
 void MainWindow::get2D()
 {
-
+    point2 p2;
+    p2Buf.resize(1);///--------------------------------------------------CORREGIR
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
+    //------------------------------------------------------time pre buffers
+    for (int i = 0; i < 480*640; ++i)
+    {
+        // Convert from image plane coordinates to world coordinates
+        if( (p2.z = depthBuf[i]) != 0  ){                  // Z = d
+            p2.x = (i%640-(640-1)/2.f)*depthBuf[i]/f;      // X = (x - cx) * d / fx
+            p2Buf.push_back(p2);//MainWindow::p2Buf
+        }
+    }//----------------------------------------------------------time post buffers
 }
 
 void MainWindow::getBarrido()
 {
-
+    point3c p3;///------------------------------------------------------CORREGIR
+    for(int i=0;i<360;i++) barridoBuf[i]=0;
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
+    //------------------------------------------------------time pre buffers
+    for (int i = 0; i < 480*640; ++i)
+    {
+        if( (p3.z = depthBuf[i]) != 0  ){                  // Z = d
+            p3.x = (i%640-(640-1)/2.f)*depthBuf[i]/f;      // X = (x - cx) * d / fx
+            int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
+            uint32_t length = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
+            if( barridoBuf[index]==0 || barridoBuf[index]>length)
+                barridoBuf[index]=length;
+        }
+    }//----------------------------------------------------------time post buffers
 }
 
 /*!

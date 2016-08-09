@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2016  Gabriel Alzamora.
+ *
+ * This code is licensed to you under the terms of the
+ * GNU General Public License. See LICENSE file for the
+ * text of the license, or the following URL:
+ * https://www.gnu.org/licenses/gpl.html
+ */
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -71,25 +80,25 @@ private:
     std::vector<QGraphicsEllipseItem*> ellipseVector;
     QPainter *ptpt;
 
-    Freenect::Freenect freenect;///< Freenect class object to start events thread and Devices
-    freenect_context *context;///< point to usb context associated to kinect data handling
+    Freenect::Freenect freenect;//!< Freenect class object to start events thread and Devices
+    freenect_context *context;//!< point to usb context associated to kinect data handling
     Apikinect *device;
 
-    std::vector<uint8_t> videoBuf;///< container of video info from kinect
-    std::vector<uint16_t> depthBuf;///< container of depth info from kinect
-    std::vector<point3c> p3Buf;///< container of points cloud <- video+depth
-    std::vector<point2> p2Buf;///< container of 2D points = (point cloud) - color - z
-    std::vector<uint32_t> barridoBuf;///< barridoBuf contains distance on angle (360-i)/2 degrees, xOz plane
-    std::vector<double> accel;///< acceleration components x,y,z (y ~ 9,81 if m_iAnguloKinect=0)
-    pBuf ptrToBuffers;///< to tell mainServer where to find data buffers
-    int flag;///< 0 stop loop(), otherwise let loop() run
-    int numDevices;///< number of detected kinects
-    int currentDeviceIndex;///< index of active kinect
+    std::vector<uint8_t> videoBuf;//!< container of video info from kinect
+    std::vector<uint16_t> depthBuf;//!< container of depth info from kinect
+    std::vector<point3c> p3Buf;//!< container of points cloud <- video+depth
+    std::vector<point2> p2Buf;//!< container of 2D points = (point cloud) - color - z
+    std::vector<uint32_t> barridoBuf;//!< barridoBuf contains distance on angle (360-i)/2 degrees, xOz plane
+    std::vector<double> accel;//!< acceleration components x,y,z (y ~ 9,81 if m_iAnguloKinect=0)
+    pBuf ptrToBuffers;//!< to tell mainServer where to find data buffers
+    int flag;//!< 0 stop loop(), otherwise let loop() run
+    int numDevices;//!< number of detected kinects
+    int currentDeviceIndex;//!< index of active kinect
 
     QTcpServer *mainServer;
 //    QTcpSocket *mainSocket;
     AttendClient *attendant;
-    std::vector<AttendClient*> attendClients;///< active AttendClient (to access them)
+    std::vector<AttendClient*> attendClients;//!< active AttendClient (to access them)
 
     std::vector<int> timeVector;//msecs
 };

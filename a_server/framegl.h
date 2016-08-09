@@ -1,3 +1,12 @@
+/*
+ * Copyright (c) 2016  Gabriel Alzamora.
+ *
+ * This code is licensed to you under the terms of the
+ * GNU General Public License. See LICENSE file for the
+ * text of the license, or the following URL:
+ * https://www.gnu.org/licenses/gpl.html
+ */
+
 #ifndef FRAMEGL_H
 #define FRAMEGL_H
 
@@ -41,8 +50,8 @@ public slots:
 
 private:
     std::mutex mtxCloud;//think better if it's neccesary
-    std::vector<point3c> pCloud;///< keep points cloud info
-    int sizeCloud;///< number of points should = pCloud.size()
+    std::vector<point3c> pCloud;//!< keep points cloud info
+    int sizeCloud;//!< number of points should = pCloud.size()
 
     QColor clearColor;
     QPoint lastPosition;

@@ -1,5 +1,11 @@
-
-
+/*
+ * Copyright (c) 2016  Gabriel Alzamora.
+ *
+ * This code is licensed to you under the terms of the
+ * GNU General Public License. See LICENSE file for the
+ * text of the license, or the following URL:
+ * https://www.gnu.org/licenses/gpl.html
+ */
 
 #ifndef ATTENDCLIENT_H
 #define ATTENDCLIENT_H
@@ -39,7 +45,7 @@ public slots:
     void sendAccel();
 
 private:
-    QTcpSocket *m_socket;///< as srvK socket
+    QTcpSocket *m_socket;//!< as srvK socket
     quint64 sizeSrvK;
     quint8 flagSrvK;
     QHostAddress peerAddr;

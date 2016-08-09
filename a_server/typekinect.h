@@ -1,3 +1,13 @@
+/*
+ * Copyright (c) 2016  Gabriel Alzamora.
+ * Copyright (c) 2016  Raúl Alves.
+ *
+ * This code is licensed to you under the terms of the
+ * GNU General Public License. See LICENSE file for the
+ * text of the license, or the following URL:
+ * https://www.gnu.org/licenses/gpl.html
+ */
+
 #ifndef TYPEKINECT_H
 #define TYPEKINECT_H
 
@@ -78,12 +88,12 @@ typedef struct srvKinect{
  * \brief holds pointers to all kinect and derived data
  */
 typedef struct pBuf{
-    std::vector<uint8_t> *ptrVideoBuf;///< container of video info from kinect
-    std::vector<uint16_t> *ptrDepthBuf;///< container of depth info from kinect
-    std::vector<point3c> *ptrP3Buf;///< container of points cloud <- video+depth
-    std::vector<point2> *ptrP2Buf;///< container of 2D points = (point cloud) - color - z
-    std::vector<uint32_t> *ptrBarridoBuf;///< barridoBuf contains distance to closer object on angle (360-i)/2 degrees, xOz plane (horizontal to camera)
-    std::vector<double> *ptrAccel;///< acceleration components x,y,z (y ~ 9,81 if m_iAnguloKinect=0)
+    std::vector<uint8_t> *ptrVideoBuf;//!< container of video info from kinect
+    std::vector<uint16_t> *ptrDepthBuf;//!< container of depth info from kinect
+    std::vector<point3c> *ptrP3Buf;//!< container of points cloud <- video+depth
+    std::vector<point2> *ptrP2Buf;//!< container of 2D points = (point cloud) - color - z
+    std::vector<uint32_t> *ptrBarridoBuf;//!< barridoBuf contains distance to closer object on angle (360-i)/2 degrees, xOz plane (horizontal to camera)
+    std::vector<double> *ptrAccel;//!< acceleration components x,y,z (y ~ 9,81 if m_iAnguloKinect=0)
 }pBuf;
 
 #endif // TYPEKINECT_H
