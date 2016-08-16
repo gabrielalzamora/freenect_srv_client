@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent) :
     init();
     startServer();
     setServerIp();
-    putKcombo();
+    putKcombo();//fill combo box with available kinects
     barridoInit();//paint axes on barrido view
 
     connect(ui->tab_2,SIGNAL(dataChanged()),this,SLOT(updateKinect()));
@@ -140,7 +140,7 @@ void MainWindow::barridoInit()
     ejesPen.setWidth(2);
     QLine ejex = QLine(5,230,315,230);
     QLine ejey = QLine(160,230,160,5);
-    //pinta escala cada ~500mm
+    //falta pintar escala cada ~500mm
     sceneBarre->addLine(ejex,ejesPen);
     sceneBarre->addLine(ejey,ejesPen);
 }
@@ -293,7 +293,8 @@ void MainWindow::putKcombo()
 }
 
 /*!
- * \brief MainWindow::startK
+ * \brief
+ * create kinect handler
  * init device to handle kinect of indexK
  * \param indexK
  */
@@ -305,7 +306,7 @@ void MainWindow::startK(int indexK)
     currentDeviceIndex = indexK;
 }
 /*!
- * \brief MainWindow::stopK destroy kinect handler
+ * \brief destroy kinect handler
  * \param index index kinect handler index to be destroyed
  */
 void MainWindow::stopK(int indexK)
@@ -317,9 +318,10 @@ void MainWindow::stopK(int indexK)
     device = NULL;
 }
 /*!
- * \brief MainWindow::loop
+ * \brief
  * working horse retrieving video & depth info
- * and pouring it to p3Buf (point cloud: 3D+color)
+ * and pouring it into buffers as
+ * p3Buf (point cloud: 3D+color)...
  */
 void MainWindow::loop()
 {
@@ -378,15 +380,15 @@ void MainWindow::loop()
     }
 }
 /*!
- * \brief MainWindow::stoploop
- * convinience funtion to stop loop seting wile(flag)=0
+ * \brief
+ * convinience funtion to stop loop seting while(flag)=0
  */
 void MainWindow::stoploop()
 {
     flag = 0;
 }
 /*!
- * \brief MainWindow::printTimeVector
+ * \brief
  * aux function to control time spend in calculus or painting
  * \param timeV
  * vector to save data
@@ -449,7 +451,7 @@ void MainWindow::getAll()///-------probar exhaustívamente-------------DEBUG
 
 void MainWindow::get3D()
 {
-    point3c p3;
+/*    point3c p3;
     RGBQ color;
 
     float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
@@ -469,11 +471,11 @@ void MainWindow::get3D()
         }
     }
 //time post buffers
-}
+*/}
 
 void MainWindow::get2D()
 {
-    point2 p2;
+/*    point2 p2;
     p2Buf.resize(1);///--------------------------------------------------CORREGIR
     float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
     //------------------------------------------------------time pre buffers
@@ -503,21 +505,28 @@ void MainWindow::getBarrido()
                 barridoBuf[index]=length;
         }
     }//----------------------------------------------------------time post buffers
+*/}
+
+void MainWindow::getBarrido()
+{
+
 }
 
 /*!
- * \brief MainWindow::on_pbGo_clicked start selected kinect data flow
+ * \brief
+ * start selected kinect data flow
  */
 void MainWindow::on_pbGo_clicked()///--------------------------DEBUG
 {
-    //ui->pbGo->setEnabled(false);
+    ui->pbGo->setEnabled(false);
     int index = ui->combo->currentText().toInt();
-    //startK(index);
+    startK(index);
     currentDeviceIndex = index;
-    //loop();
+    loop();
 }
 /*!
- * \brief MainWindow::on_pbStop_clicked stop kinect data flow and delete handler
+ * \brief
+ * stop kinect data flow and delete handler
  */
 void MainWindow::on_pbStop_clicked()
 {
@@ -557,6 +566,7 @@ void MainWindow::on_combo_activated(const QString &arg1)
  */
 void MainWindow::startServer()
 {
+    qDebug("MainWindow::startServer");
     if( !mainServer->listen(QHostAddress::Any,SRVKPORT) ){
         ui->textEdit->setText(mainServer->errorString());
         mainServer->close();
