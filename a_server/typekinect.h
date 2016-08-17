@@ -17,8 +17,6 @@
 /*!
  * \struct RGBQ
  * \brief color in RGB style 32bits long.
- *
- *
  */
 typedef struct RGBQ{
     uint8_t rgbRed;//!< red color component of RGB.
@@ -57,11 +55,11 @@ typedef struct point2{
  *
  * Used as database but mainly to send information from
  * client to server, change kinect camera angle remotely
- * and update which data to be sent, limits, refresh...
+ * and update data to be sent, limits, refresh...
  */
 typedef struct srvKinect{
     double m_fAngulo;//!< angle (degrees) with horizontal plane of kinect base.
-    int8_t m_iAnguloKinect;
+    int8_t m_iAnguloKinect;//!< sigue cuando te estanques en otra cosa
     double m_fAltura;
     double m_fYMin;
     double m_fYMax;

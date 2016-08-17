@@ -3,6 +3,7 @@ QT server connected to kinect will send 3d data to clients
 
 in progress...
 
+17 ago 2016 - served video, client may change kinect angle
  5 ago 2016 - types in data.h teared apart to typekinect.h 
  4 ago 2016 - data changed in client are changed in server (but led)
 23 jul 2016 - server data in tab_2 (data) control kinect angle & led color

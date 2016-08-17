@@ -34,7 +34,7 @@
  */
 
 /*!
- * \brief MainWindow::MainWindow
+ * \brief constructor
  * \param parent
  */
 MainWindow::MainWindow(QWidget *parent) :
@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->tab_2,SIGNAL(ledOptionChanged()),this,SLOT(updateKinect()));
 }
 /*!
- * \brief MainWindow::~MainWindow
+ * \brief destructor
  */
 MainWindow::~MainWindow()
 {
@@ -71,9 +71,10 @@ MainWindow::~MainWindow()
     delete ui;
 }
 /*!
- * \brief MainWindow::videoDataReady
- * draw video image (on ui->gvVideo sceneVideo using data from buf vector)
- * \param buf
+ * \brief draw video image
+ *
+ * This function is called when paint new frame data is needed.
+ * Is painted on ui->gvVideo sceneVideo using data from 'videoBuf' vector data.
  */
 void MainWindow::videoDataReady()
 {
@@ -83,9 +84,10 @@ void MainWindow::videoDataReady()
     ui->gvVideo->show();
 }
 /*!
- * \brief MainWindow::depthDataReady
- * draw depth image (on ui->gvDepth sceneDepth using data from buf vector).
- * \param buf
+ * \brief draw depth image
+ *
+ * This function is called when paint new frame data is needed.
+ * Is painted on ui->gvDepth sceneDepth using data from 'depthBuf' vector data.
  */
 void MainWindow::depthDataReady()
 {
@@ -104,8 +106,10 @@ void MainWindow::depthDataReady()
     ui->gvDepth->show();
 }
 /*!
- * \brief MainWindow::barreDataReady
- * draw barrido (barre) (on ui->gvBarre sceneBarre using
+ * \brief draw Barrido
+ *
+ * This function is called when paint new Barrido data is needed.
+ * Is painted on ui->gvBarre sceneBarre using 'barridoBuf' vector data.
  */
 void MainWindow::barridoDataReady()
 {
@@ -145,8 +149,10 @@ void MainWindow::barridoInit()
     sceneBarre->addLine(ejey,ejesPen);
 }
 /*!
- * \brief MainWindow::updateKinect
- * set current led option and kinect angle on active kinect.
+ * \brief set current led option and kinect angle on active kinect.
+ *
+ * When any data on 'Data' object change it sends the order to
+ * update to active kinect
  */
 void MainWindow::updateKinect()
 {
@@ -156,10 +162,9 @@ void MainWindow::updateKinect()
     }
 }
 /*!
- * \brief MainWindow::updateSrvKinect
- * set srvKinect data sended by client
- * \param sk
- * [in] client current srvKinect
+ * \brief set srvKinect data sended by client
+ * \param [in] sk
+ * client current srvKinect
  */
 void MainWindow::updateSrvKinect(srvKinect newSrvK)
 {
@@ -214,8 +219,7 @@ void MainWindow::updateSrvKinect(srvKinect newSrvK)
 }
 
 /*!
- * \brief MainWindow::init
- * convenience function to initiate members
+ * \brief convenience function to initiate members
  */
 void MainWindow::init()
 {
@@ -231,12 +235,12 @@ void MainWindow::init()
     p2Buf.resize(0);
     barridoBuf.resize(360);
     accel.resize(3);
-    ptrToBuffers.ptrVideoBuf = &videoBuf;
-    ptrToBuffers.ptrDepthBuf = &depthBuf;
-    ptrToBuffers.ptrP3Buf = &p3Buf;
-    ptrToBuffers.ptrP2Buf = &p2Buf;
-    ptrToBuffers.ptrBarridoBuf = &barridoBuf;
-    ptrToBuffers.ptrAccel = &accel;
+    structBuffers.ptrVideoBuf = &videoBuf;
+    structBuffers.ptrDepthBuf = &depthBuf;
+    structBuffers.ptrP3Buf = &p3Buf;
+    structBuffers.ptrP2Buf = &p2Buf;
+    structBuffers.ptrBarridoBuf = &barridoBuf;
+    structBuffers.ptrAccel = &accel;
     ellipseVector.reserve(360);
     ellipseVector.resize(0);
     sceneVideo = new QGraphicsScene;
@@ -253,8 +257,7 @@ void MainWindow::init()
     mainServer = new QTcpServer(this);
 }
 /*!
- * \brief MainWindow::setServerIp
- * write my server ip on gui label
+ * \brief write my server ip on gui label
  */
 void MainWindow::setServerIp()
 {
@@ -272,8 +275,7 @@ void MainWindow::setServerIp()
     ui->label_ip->setText(ip);
 }
 /*!
- * \brief MainWindow::putKcombo
- * fill combo list with detected kinect index
+ * \brief fill combo list with detected kinect index
  */
 void MainWindow::putKcombo()
 {
@@ -293,10 +295,10 @@ void MainWindow::putKcombo()
 }
 
 /*!
- * \brief
- * create kinect handler
- * init device to handle kinect of indexK
- * \param indexK
+ * \brief create kinect handler.
+ *
+ * init 'Apikinect device' to handle kinect of indexK.
+ * \param [in] indexK.
  */
 void MainWindow::startK(int indexK)
 {
@@ -306,8 +308,8 @@ void MainWindow::startK(int indexK)
     currentDeviceIndex = indexK;
 }
 /*!
- * \brief destroy kinect handler
- * \param index index kinect handler index to be destroyed
+ * \brief destroy kinect handler.
+ * \param [in] index kinect handler index to be destroyed.
  */
 void MainWindow::stopK(int indexK)
 {
@@ -318,9 +320,9 @@ void MainWindow::stopK(int indexK)
     device = NULL;
 }
 /*!
- * \brief
- * working horse retrieving video & depth info
- * and pouring it into buffers as
+ * \brief working horse retrieving video & depth info.
+ *
+ * Get video and depth info to pour it into buffers as
  * p3Buf (point cloud: 3D+color)...
  */
 void MainWindow::loop()
@@ -347,7 +349,8 @@ void MainWindow::loop()
 
         if( ui->tab_2->m_srvK.m_bEnvio3D && ui->tab_2->m_srvK.m_bEnvioBarrido){//all buffers
             t.start();//---------------------------------------------time.start
-            device->getAll(p3Buf,barridoBuf);
+            //device->getAll(p3Buf,barridoBuf);
+            device->getAll(&structBuffers,&ui->tab_2->m_srvK);
             timeVector.push_back(t.elapsed());//---------------------timeVector[2]
 
             t.start();//---------------------------------------------time.start
@@ -380,18 +383,15 @@ void MainWindow::loop()
     }
 }
 /*!
- * \brief
- * convinience funtion to stop loop seting while(flag)=0
+ * \brief convinience funtion to stop loop seting while(flag)=0.
  */
 void MainWindow::stoploop()
 {
     flag = 0;
 }
 /*!
- * \brief
- * aux function to control time spend in calculus or painting
- * \param timeV
- * vector to save data
+ * \brief aux function to control time spend in calculus or painting.
+ * \param [out] timeV vector to save data.
  */
 void MainWindow::printTimeVector(std::vector<int> &timeV)
 {
@@ -418,103 +418,8 @@ void MainWindow::printTimeVector(std::vector<int> &timeV)
     ui->textEdit->setText(str);
 }
 
-void MainWindow::getAll()///-------probar exhaustívamente-------------DEBUG
-{
-    point3c p3;
-    RGBQ color;///-----------------------------------------------------------CORREGIR
-    p3Buf.resize(1);///------------------------------resize(0)--------DEBUG
-    for(int i=0;i<360;i++) barridoBuf[i]=0;
-
-    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
-    //------------------------------------------------------time pre buffers
-    for (int i = 0; i < 480*640; ++i)
-    {
-        // Convert from image plane coordinates to world coordinates
-        if( (p3.z = depthBuf[i]) != 0  ){                  // Z = d
-            p3.x = (i%640-(640-1)/2.f)*depthBuf[i]/f;      // X = (x - cx) * d / fx
-            p3.y = (i/640 - (480-1)/2.f) * depthBuf[i] / f;// Y = (y - cy) * d / fy
-            color.rgbRed = videoBuf[3*i+0];    // R
-            color.rgbGreen = videoBuf[3*i+1];  // G
-            color.rgbBlue = videoBuf[3*i+2];   // B
-            color.rgbReserved = 0;
-            p3.color = color;
-            p3Buf.push_back(p3);//MainWindow::p3Buf
-//time pre barrer
-            int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
-            uint32_t length = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
-            if( barridoBuf[index]==0 || barridoBuf[index]>length)
-                barridoBuf[index]=length;
-//time post barrer  difference*numpoints = time barrer
-        }
-    }//----------------------------------------------------------time post buffers
-}
-
-void MainWindow::get3D()
-{
-/*    point3c p3;
-    RGBQ color;
-
-    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
-//time pre buffers
-    for (int i = 0; i < 480*640; ++i)///-----------------------------------CORREGIR
-    {
-        // Convert from image plane coordinates to world coordinates
-        if( (p3.z = depthBuf[i]) != 0  ){                  // Z = d
-            p3.x = (i%640-(640-1)/2.f)*depthBuf[i]/f;      // X = (x - cx) * d / fx
-            p3.y = (i/640 - (480-1)/2.f) * depthBuf[i] / f;// Y = (y - cy) * d / fy
-            color.rgbRed = videoBuf[3*i+0];    // R
-            color.rgbGreen = videoBuf[3*i+1];  // G
-            color.rgbBlue = videoBuf[3*i+2];   // B
-            color.rgbReserved = 0;
-            p3.color = color;
-            p3Buf.push_back(p3);//MainWindow::p3Buf
-        }
-    }
-//time post buffers
-*/}
-
-void MainWindow::get2D()
-{
-/*    point2 p2;
-    p2Buf.resize(1);///--------------------------------------------------CORREGIR
-    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
-    //------------------------------------------------------time pre buffers
-    for (int i = 0; i < 480*640; ++i)
-    {
-        // Convert from image plane coordinates to world coordinates
-        if( (p2.z = depthBuf[i]) != 0  ){                  // Z = d
-            p2.x = (i%640-(640-1)/2.f)*depthBuf[i]/f;      // X = (x - cx) * d / fx
-            p2Buf.push_back(p2);//MainWindow::p2Buf
-        }
-    }//----------------------------------------------------------time post buffers
-}
-
-void MainWindow::getBarrido()
-{
-    point3c p3;///------------------------------------------------------CORREGIR
-    for(int i=0;i<360;i++) barridoBuf[i]=0;
-    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
-    //------------------------------------------------------time pre buffers
-    for (int i = 0; i < 480*640; ++i)
-    {
-        if( (p3.z = depthBuf[i]) != 0  ){                  // Z = d
-            p3.x = (i%640-(640-1)/2.f)*depthBuf[i]/f;      // X = (x - cx) * d / fx
-            int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
-            uint32_t length = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
-            if( barridoBuf[index]==0 || barridoBuf[index]>length)
-                barridoBuf[index]=length;
-        }
-    }//----------------------------------------------------------time post buffers
-*/}
-
-void MainWindow::getBarrido()
-{
-
-}
-
 /*!
- * \brief
- * start selected kinect data flow
+ * \brief start selected kinect data flow
  */
 void MainWindow::on_pbGo_clicked()///--------------------------DEBUG
 {
@@ -525,8 +430,7 @@ void MainWindow::on_pbGo_clicked()///--------------------------DEBUG
     loop();
 }
 /*!
- * \brief
- * stop kinect data flow and delete handler
+ * \brief stop kinect data flow and delete handler
  */
 void MainWindow::on_pbStop_clicked()
 {
@@ -538,9 +442,9 @@ void MainWindow::on_pbStop_clicked()
     }
 }
 /*!
- * \brief MainWindow::on_combo_activated
- * when combo item selected -> buttons activated
- * \param index
+ * \brief when combo item selected -> buttons activated
+ * \param [in] arg1
+ * pointer to string with kinect index selected in combo box
  */
 void MainWindow::on_combo_activated(const QString &arg1)
 {
@@ -561,8 +465,7 @@ void MainWindow::on_combo_activated(const QString &arg1)
 }
 
 /*!
- * \brief MainWindow::startServer
- * start QTcpServer listening at port 9999 and connect to attendNewClient()
+ * \brief start QTcpServer listening at port 9999 and connect to attendNewClient()
  */
 void MainWindow::startServer()
 {
@@ -576,13 +479,12 @@ void MainWindow::startServer()
     connect(mainServer, SIGNAL(newConnection()), this, SLOT(attendNewClient()));
 }
 /*!
- * \brief MainWindow::attendNewClient
- * when client connection incoming create a new AttendClient and bind
+ * \brief when client connection incoming create a new 'AttendClient' and bind
  */
 void MainWindow::attendNewClient()///------test with concurrent clients----------DEBUG
 {
     qDebug("MainWindow::startServer");
-    attendant = new AttendClient(mainServer->nextPendingConnection(),&ptrToBuffers,this);
+    attendant = new AttendClient(mainServer->nextPendingConnection(),&structBuffers,this);
     if( attendant == NULL ) ui->textEdit->setText("BAD_ALLOC  AttendClient");
     attendClients.push_back(attendant);
 
@@ -590,9 +492,8 @@ void MainWindow::attendNewClient()///------test with concurrent clients---------
 }
 
 /*!
- * \brief MainWindow::closeEvent
- * override window close event to stop loop and delete apikinect handler.
- * \param event
+ * \brief override window close event to stop loop and delete apikinect handler.
+ * \param [in] event
  */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
