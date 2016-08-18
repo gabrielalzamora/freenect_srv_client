@@ -50,10 +50,11 @@ void Apikinect::VideoCallback(void *_rgb, uint32_t timestamp)
  * \brief called if usb depth event in Freenect::m_thread.
  * \param [out] _depth points buffer where to save usb incoming depth frame.
  * \param timestamp internal use to synchronize video & depth frames.
+ * \see libfreenect.hpp Freenect::Freenect
  */
 void Apikinect::DepthCallback(void *_depth, uint32_t timestamp)
 {
-    std::lock_guard<std::mutex> lock(m_depth_mutex);
+    std::lock_guard<std::mutex> lock(m_depth_mutex);//lock will be destroy when exit VideoCallback
     uint16_t* depth = static_cast<uint16_t*>(_depth);
     copy(depth, depth+getDepthBufferSize()/2, m_buffer_depth.begin());
     m_new_depth_frame = true;
@@ -133,41 +134,58 @@ void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &buf
  */
 void Apikinect::getAll(pBuf *structBuffers, srvKinect *aSrvKinect)
 {
-    point2 p2;
-    point3c p3;
+    point2 p2;//2 dimensions points cloud
+    point3c p3;//3D + color points cloud
     RGBQ color;
-    structBuffers->ptrP3Buf->resize(0);
-    for(int i=0;i<360;i++) (*structBuffers->ptrBarridoBuf)[i]=0;
+    structBuffers->ptrP3Buf->resize(0);//reset 3D points cloud
+    structBuffers->ptrP2Buf->resize(0);//reset 2D points cloud
+    for(int i=0;i<360;i++) (*structBuffers->ptrBarridoBuf)[i]=0;//reset Barrido vector
     float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
     //------------------------------------------------------time pre buffers
-    for (int i = 0; i < 480*640; ++i)
+    for (int i = 0; i < 480*640; i+=aSrvKinect->m_usModulo3D)
     {
         // Convert from image plane coordinates to world coordinates
-        if( (p3.z = m_buffer_depth[i]) != 0  ){                  // Z = d
-            p3.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;      // X = (x - cx) * d / fx
-            p3.y = (i/640 - (480-1)/2.f) * m_buffer_depth[i] / f;// Y = (y - cy) * d / fy
-            color.rgbRed = m_buffer_video[3*i+0];    // R
-            color.rgbGreen = m_buffer_video[3*i+1];  // G
-            color.rgbBlue = m_buffer_video[3*i+2];   // B
-            color.rgbReserved = 0;
-            p3.color = color;
-            structBuffers->ptrP3Buf->push_back(p3);//MainWindow::p3Buf
-//time pre barrer
-            int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
-            uint32_t distance = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
-            if( (*structBuffers->ptrBarridoBuf)[index]==0 || (*structBuffers->ptrBarridoBuf)[index]>distance)
-                (*structBuffers->ptrBarridoBuf)[index]=distance;
-//time post barrer  difference*numpoints = time barrer
+        // Z into screen, Y downwards, X to right as OpenGL
+        // Z = depth*cos(angleKinect)-y*sin(angleKinect)  if angleKinect around x axis
+        p3.z = m_buffer_depth[i]*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0);
+
+        //within z limits
+        if( (p3.z != 0) && (p3.z <= aSrvKinect->m_fZMax) ){
+            // Y = (y - cy) * d / fy but remember angleKinect plus camera high
+            // Y = y*cos(angleKinect)+depth*sin(angleKinect)-CameraHigh if angleKinect around Ox axis
+            p3.y = ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) + m_buffer_depth[i]*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - aSrvKinect->m_fAltura*1000;
+
+            //within y limits
+            if( (p3.y >= (-1)*aSrvKinect->m_fYMax) && (p3.y <= (-1)*aSrvKinect->m_fYMin) ){//within y limits (remember Y downwards)
+                p2.z = p3.z;
+                p3.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;// X = (x - cx) * d / fx
+                p2.x = p3.x;
+                color.rgbRed = m_buffer_video[3*i+0];    // R
+                color.rgbGreen = m_buffer_video[3*i+1];  // G
+                color.rgbBlue = m_buffer_video[3*i+2];   // B
+                color.rgbReserved = 0;
+                p3.color = color;
+                structBuffers->ptrP3Buf->push_back(p3);//stored in MainWindow::p3Buf
+                structBuffers->ptrP2Buf->push_back(p2);//stored in MainWindow::p2Buf
+
+                int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
+                uint32_t distance = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
+
+                //within Barrido limits
+                if( (distance < aSrvKinect->m_iBarridoEcu) && (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
+                    if( (*structBuffers->ptrBarridoBuf)[index]==0 || (*structBuffers->ptrBarridoBuf)[index]>distance )
+                        (*structBuffers->ptrBarridoBuf)[index]=distance;
+                }
+            }
         }
-    }//----------------------------------------------------------time post buffers
+    }
 }
 
 /*!
  * \brief 3 dimension + color point cloud in buffer from video & depth data.
  * \param [out] buffer  where point cloud is stored.
- * \return number of point3d in buffer = buffer.size().
  */
-int Apikinect::get3d(std::vector<point3c> &buffer)
+void Apikinect::get3d(std::vector<point3c> &buffer)
 {
     point3c p3;
     RGBQ color;
@@ -187,16 +205,19 @@ int Apikinect::get3d(std::vector<point3c> &buffer)
             buffer.push_back(p3);//MainWindow::p3Buf
         }
     }
-//time post buffers
-    return buffer.size();
+    //time post buffers
+}
+
+void Apikinect::get3d(pBuf *structBuffers, srvKinect *aSrvKinect)
+{
+
 }
 
 /*!
  * \brief 2 dimention point cloud in buffer from video & depth data.
  * \param [out] buffer where point cloud is stored.
- * \return number of point2d in buffer = buffer.size().
  */
-int Apikinect::get2(std::vector<point2> &buffer)
+void Apikinect::get2(std::vector<point2> &buffer)
 {
     point2 p2;
     buffer.resize(1);
@@ -210,7 +231,6 @@ int Apikinect::get2(std::vector<point2> &buffer)
             buffer.push_back(p2);//MainWindow::p2Buf
         }
     }//----------------------------------------------------------time post buffers
-    return buffer.size();
 }
 
 /*!
@@ -220,7 +240,7 @@ int Apikinect::get2(std::vector<point2> &buffer)
  * \param buffer where 360 distance values are stored
  * \return number of points should be 360=buffer.size()
  */
-int Apikinect::getBarrido(std::vector<uint32_t> &buffer)
+void Apikinect::getBarrido(std::vector<uint32_t> &buffer)
 {
     point3c p3;
     for(int i=0;i<360;i++) buffer[i]=0;
@@ -236,5 +256,4 @@ int Apikinect::getBarrido(std::vector<uint32_t> &buffer)
                 buffer[index]=length;
         }
     }//----------------------------------------------------------time post buffers
-    return buffer.size();
 }

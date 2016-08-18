@@ -497,6 +497,6 @@ void MainWindow::attendNewClient()///------test with concurrent clients---------
  */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    //this->~MainWindow();
-    //exit(0);
+    this->~MainWindow();
+    exit(0);
 }

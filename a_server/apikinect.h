@@ -29,9 +29,10 @@ public:
 
     void getAll(std::vector<point3c> &buffer3,std::vector<uint32_t> &bufferB);
     void getAll(pBuf *structBuffers, srvKinect *aSrvKinect);
-    int get3d(std::vector<point3c> &buffer);
-    int get2(std::vector<point2> &buffer);
-    int getBarrido(std::vector<uint32_t> &buffer);//!Barre o Barrido para todo; pero para de poner variantes
+    void get3d(std::vector<point3c> &buffer);
+    void get3d(pBuf *structBuffers, srvKinect *aSrvKinect);
+    void get2(std::vector<point2> &buffer);
+    void getBarrido(std::vector<uint32_t> &buffer);
 
 private:
     std::mutex m_rgb_mutex;//!< mutex to ensure video frame data save access
