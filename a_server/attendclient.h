@@ -35,12 +35,15 @@ public slots:
 
     void incomingDepth();
     void sendDepth();
+
     void incoming3d();
     void send3d();
     void incoming2d();
     void send2d();
+
     void incomingBarrido();
     void sendBarrido();
+
     void incomingAccel();
     void sendAccel();
 
@@ -77,6 +80,7 @@ private:
     QTcpServer *s_barrido;
     QTcpSocket *skt_barrido;
     quint64 sizeBarrido;
+    quint8 flagBarrido;
 
     QTcpServer *s_accel;
     QTcpSocket *skt_accel;

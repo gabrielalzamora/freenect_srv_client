@@ -44,9 +44,9 @@ public slots:
     void wheelEvent(QWheelEvent *event) Q_DECL_OVERRIDE;
     void mouseReleaseEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
 
-    void drawCloud();//auxiliar, simplifica paintGL(), dibuja pts
+    void drawCloud();//auxiliary, make paintGL() simple, draw pts
     void drawAxis();//aux funtion, paint reference axes
-    void drawLines();//aux lines, esto es de RAUL
+    void drawLines();//aux ground level lines, esto es de RAUL
 
 private:
     std::mutex mtxCloud;//think better if it's neccesary

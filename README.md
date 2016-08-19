@@ -3,6 +3,7 @@ QT server connected to kinect will send 3d data to clients
 
 in progress...
 
+18 ago 2016 - serving video, depth & barrido (swept) reconnecting
 18 ago 2016 - served depth to client (but unable to reonnect)
 18 ago 2016 - limits on 3D & Barrido plus modulo implemented
 17 ago 2016 - served video, client may change kinect angle

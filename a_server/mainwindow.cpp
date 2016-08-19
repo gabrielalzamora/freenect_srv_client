@@ -109,7 +109,7 @@ void MainWindow::depthDataReady()
  * \brief draw Barrido
  *
  * This function is called when paint new Barrido data is needed.
- * Is painted on ui->gvBarre sceneBarre using 'barridoBuf' vector data.
+ * Is painted on ui->gvBarrido sceneBarre using 'barridoBuf' vector data.
  */
 void MainWindow::barridoDataReady()
 {
@@ -130,15 +130,15 @@ void MainWindow::barridoDataReady()
         sceneBarre->addItem(ellipseVector[aux]);
         aux++;
     }
-    ui->gvBarre->show();
+    ui->gvBarrido->show();
 }
 /*!
  * \brief MainWindow::barreInit
- * draw axes on sceneBarre to show on gvBarre.
+ * draw axes on sceneBarre to show on gvBarrido.
  */
 void MainWindow::barridoInit()
 {
-    ui->gvBarre->setBackgroundBrush(QColor(200,240,240,255));//light blue
+    ui->gvBarrido->setBackgroundBrush(QColor(200,240,240,255));//light blue
     sceneBarre->setBackgroundBrush(QColor(200,240,240,255));
     QPen ejesPen = QPen(QColor(255,0,0,255));//red color
     ejesPen.setWidth(2);
@@ -251,7 +251,7 @@ void MainWindow::init()
     imgBarre = NULL;
     ui->gvVideo->setScene(sceneVideo);
     ui->gvDepth->setScene(sceneDepth);
-    ui->gvBarre->setScene(sceneBarre);
+    ui->gvBarrido->setScene(sceneBarre);
     timeVector.resize(6);
     //server
     mainServer = new QTcpServer(this);

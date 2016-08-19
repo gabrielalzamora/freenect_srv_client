@@ -116,18 +116,18 @@ AttendClient::~AttendClient()
 void AttendClient::startServers()
 {
     s_video = new QTcpServer(this);
-    skt_video = new QTcpSocket(this);
+    //skt_video = new QTcpSocket(this);
 
     s_depth = new QTcpServer(this);
-    //skt_depth = new QTcpSocket(this);
+
     s_3d = new QTcpServer(this);
-    //skt_3d = new QTcpSocket(this);
+
     s_2d = new QTcpServer(this);
-    //skt_2d = new QTcpSocket(this);
+
     s_barrido = new QTcpServer(this);
-    //skt_barrido = new QTcpSocket(this);
+
     s_accel = new QTcpServer(this);
-    //skt_accel = new QTcpSocket(this);
+
 
     s_video->listen(QHostAddress::Any,VIDEOPORT);
     connect(s_video,SIGNAL(newConnection()),this,SLOT(incomingVideo()));
@@ -165,7 +165,7 @@ void AttendClient::readSrvKdata()
     }
 
     in >> flagSrvK;//flag = 0 will stop and disconnect, != 0 read srvK
-    qDebug("tamaño: %u  info: %u", sizeSrvK, flagSrvK);//DEBUG
+    qDebug("tamaño: %llu  info: %u", sizeSrvK, flagSrvK);//DEBUG
     if( !flagSrvK ){
         m_socket->disconnectFromHost();
         qDebug("Cliente ordena desconectar");
@@ -211,8 +211,7 @@ void AttendClient::incomingVideo()
  */
 void AttendClient::sendVideo()
 {
-    qDebug("AttendClient::sendVideo");
-
+    //qDebug("AttendClient::sendVideo");
     if(skt_video->peerAddress() == peerAddr){//AttendClient only attend single client
         qDebug("  es mi cliente :o)");
 
@@ -235,13 +234,14 @@ void AttendClient::sendVideo()
     }
 
     in >> flagVideo;//flag = 0 will stop and disconnect, != 0 send image
-    qDebug("tamaño: %u  info: %u", sizeVideo, flagVideo);//DEBUG
+    //qDebug("tamaño: %llu  info: %u", sizeVideo, flagVideo);//DEBUG
+    sizeVideo = 0;//to allow reading next message size
+
     if( !flagVideo ){
         skt_video->disconnectFromHost();
-        qDebug("Cliente ordena desconectar VIDEO");
+        //qDebug("Cliente ordena desconectar VIDEO");
         return;
     }//--------------- only goes ahead if all data received & flagVideo != 0
-    sizeVideo = 0;//to allow reading next message size
 
 //----------------------------------------------------------------create & send video frame as QImage
     QImage image = QImage(structBuffers.ptrVideoBuf->data(),640,480,QImage::Format_RGB888);
@@ -268,8 +268,7 @@ void AttendClient::incomingDepth()
  */
 void AttendClient::sendDepth()
 {
-    qDebug("AttendClient::sendDepth");
-
+    //qDebug("AttendClient::sendDepth");
     if(skt_depth->peerAddress() != peerAddr){//AttendClient only attend single client
         qDebug("  otro cliente :o(  %u yo %u ",skt_depth->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
         return;//if client is not our client wait for next connection
@@ -289,13 +288,14 @@ void AttendClient::sendDepth()
     }
 
     in >> flagDepth;//flag = 0 will stop and disconnect, != 0 send image
-    qDebug("tamaño: %u  info: %u", sizeDepth, flagDepth);//DEBUG
+    //qDebug("tamaño: %llu  info: %u", sizeDepth, flagDepth);//DEBUG
+    sizeDepth = 0;//to allow reading next message size
+
     if( !flagDepth ){
         skt_depth->disconnectFromHost();
-        qDebug("Cliente ordena desconectar Depth");
+        //qDebug("Cliente ordena desconectar Depth");
         return;
     }//--------------- only goes ahead if all data received & flagDepth != 0
-    sizeDepth = 0;//to allow reading next message size
 
 //----------------------------------------------------------------create & send depth frame as QImage
     QImage image = QImage(640,480,QImage::Format_Grayscale8);
@@ -339,14 +339,62 @@ void AttendClient::send2d()
 
 }
 
+/*!
+ * \brief incoming connection bind to a socket in order to I/O data
+ */
 void AttendClient::incomingBarrido()
 {
-
+    skt_barrido = s_barrido->nextPendingConnection();
+    connect(skt_barrido,SIGNAL(readyRead()),this,SLOT(sendBarrido()));
 }
-
+/*!
+ * \brief send barrido (vector) through skt_barrido to client
+ */
 void AttendClient::sendBarrido()
 {
+    qDebug("AttendClient::sendBarrido");
 
+    if(skt_barrido->peerAddress() != peerAddr){//AttendClient only attend single client
+        qDebug("  otro cliente :o(  %u yo %u ",skt_barrido->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+        return;//if client is not our client wait for next connection
+    }
+
+    //-------------------------------------------------------read client msg
+    QDataStream in(skt_barrido);//read client petition
+    in.setVersion(QDataStream::Qt_5_0);
+
+    if (sizeBarrido == 0) {//check there's enough bytes to read
+        if (skt_barrido->bytesAvailable() < sizeof(quint64))
+            return;
+        in >> sizeBarrido;//read and save into quint64 sizeBarrido
+    }
+    if (skt_barrido->bytesAvailable() < sizeBarrido){//check there's enough bytes to read
+        return;//if not wait till you have all data size video says
+    }
+
+    in >> flagBarrido;//flag = 0 will stop and disconnect, != 0 send barrido
+    qDebug("tamaño: %llu  info: %u", sizeBarrido, flagBarrido);//DEBUG
+    sizeBarrido = 0;//to allow reading next message size
+
+    if( !flagBarrido ){
+        skt_barrido->disconnectFromHost();
+        qDebug("Cliente ordena desconectar Barrido");
+        return;
+    }//--------------- only goes ahead if all data received & flagDepth != 0
+
+//----------------------------------------------------------------create & send depth frame as QImage
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0);
+    for( int i = 0; i<360; i++ ){
+        out << (uint32_t)(*structBuffers.ptrBarridoBuf)[i];
+        //qDebug(" esto es lo que manda barrido[%lu] = %lu",i,(*structBuffers.ptrBarridoBuf)[i]);
+    }
+    out.device()->seek(0);//point to buff beginning
+    out << quint64(buff.size() - sizeof(quint64));//set buff size at beginning
+    qDebug("  tamaño antes enviado: %lu",(buff.size() - sizeof(quint64))) ;//DEBUG
+    skt_barrido->write(buff);//send to client
 }
 
 void AttendClient::incomingAccel()

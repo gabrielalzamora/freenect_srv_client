@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QGraphicsScene>
+#include <QGraphicsItem>
 #include <QTcpSocket>
 #include <QHostAddress>
 #include "data.h"
@@ -36,6 +37,13 @@ private slots:
     void initDepth();
     void finalizeDepth();
     void readDataDepth();
+    //3D
+    //2D
+    //barrido
+    void barridoAxes();
+    void initBarrido();
+    void finalizeBarrido();
+    void readDataBarrido();
 
 private:
     Ui::MainWindow *ui;
@@ -59,7 +67,15 @@ private:
 
     QTcpSocket *skt_3D;
     QTcpSocket *skt_2D;
+
     QTcpSocket *skt_barrido;
+    int connectedBarrido;
+    quint64 sizeBarrido;
+    QGraphicsScene *sceneBarrido;
+    QGraphicsEllipseItem *ellipse;//!< holds single Barrido point to add to sceneBarrido
+    std::vector<QGraphicsEllipseItem*> ellipseVector;//!< holds barrido points to paint in ellipse
+    std::vector<uint32_t> barridoBuf;
+
     QTcpSocket *skt_accel;
 
 };
