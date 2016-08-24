@@ -191,7 +191,7 @@ void AttendClient::readSrvKdata()
 }
 
 /*!
- * \brief incoming connection bind to a socket in order to I/O data
+ * \brief answer incoming connection; bind to a socket in order to I/O data
  */
 void AttendClient::incomingVideo()
 {
@@ -248,7 +248,7 @@ void AttendClient::sendVideo()
 }
 
 /*!
- * \brief incoming connection bind to a socket in order to I/O data
+ * \brief answer incoming connection; bind to a socket in order to I/O data
  */
 void AttendClient::incomingDepth()
 {
@@ -312,24 +312,23 @@ void AttendClient::sendDepth()
 }
 
 /*!
- * \brief incoming connection bind to a socket in order to I/O data
+ * \brief answer incoming connection; bind to a socket in order to I/O data
  */
 void AttendClient::incoming3D()
 {
     skt_3d = s_3d->nextPendingConnection();
     connect(skt_3d,SIGNAL(readyRead()),this,SLOT(send3D()));
 }
-
+/*!
+ * \brief send 3D point cloud through skt_3d to client
+ */
 void AttendClient::send3D()
 {
-    qDebug("AttendClient::send3D");
-    if(skt_3d->peerAddress() == peerAddr){//AttendClient only attend single client
-        qDebug("  es mi cliente :o)");
-
-    }else{///-------Al revés -> cuando acabes DEBUG  if != return (menos código, más simple)
+    //qDebug("AttendClient::send3D");
+    if(skt_3d->peerAddress() != peerAddr){//AttendClient only attend single client
         qDebug("  otro cliente :o(  %u yo %u ",skt_3d->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
         return;//if client is not our client wait for next connection
-    }///--------------- cuando simplificado quita else{} -----------------DEBUG
+    }
 
     //-------------------------------------------------------read client msg
     QDataStream in(skt_3d);//read client petition
@@ -344,7 +343,7 @@ void AttendClient::send3D()
         return;//if not wait till you have all data size 3D says
     }
 
-    in >> flag3d;//flag = 0 will stop and disconnect, != 0 send image
+    in >> flag3d;//flag = 0 will stop and disconnect, != 0 send point cloud
     //qDebug("tamaño: %llu  info: %u", size3d, flag3d);//DEBUG
     size3d = 0;//to allow reading next message size
 
@@ -379,18 +378,70 @@ void AttendClient::send3D()
     skt_3d->write(buff);//enviamos
 }
 
+/*!
+ * \brief answer answer incoming connection; bind to a socket in order to I/O data
+ */
 void AttendClient::incoming2D()
 {
-
+    skt_2d = s_2d->nextPendingConnection();
+    connect(skt_2d,SIGNAL(readyRead()),this,SLOT(send2D()));
 }
-
+/*!
+ * \brief send 2D point cloud through skt_2d to client
+ */
 void AttendClient::send2D()
 {
+    qDebug("AttendClient::send2D");
+    if(skt_2d->peerAddress() != peerAddr){//AttendClient only attend single client
+        qDebug("  otro cliente :o(  %u yo %u ",skt_2d->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+        return;//if client is not our client wait for next connection
+    }
 
+    //-------------------------------------------------------read client msg
+    QDataStream in(skt_2d);//read client petition
+    in.setVersion(QDataStream::Qt_5_0);
+
+    if (size2d == 0) {//check there's enough bytes to read
+        if (skt_2d->bytesAvailable() < sizeof(quint64))
+            return;
+        in >> size2d;//read and save into quint64 size2d
+    }
+    if (skt_2d->bytesAvailable() < size2d){//check there's enough bytes to read
+        return;//if not wait till you have all data size 2D says
+    }
+
+    in >> flag2d;//flag = 0 will stop and disconnect, != 0 send point cloud
+    //qDebug("tamaño: %llu  info: %u", size2d, flag2d);//DEBUG
+    size2d = 0;//to allow reading next message size
+
+    if( !flag2d ){
+        skt_2d->disconnectFromHost();
+        qDebug("Cliente ordena desconectar 2d");
+        return;
+    }//--------------- only goes ahead if all data received & flag2d != 0
+
+//----------------------------------------------------------------create & send 2d vector
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+
+    //qDebug("  tamaño vector = %lu",(*structBuffers.ptrP2Buf).size());
+
+    out << qint64(0);//let space for size info
+
+    for(uint i = 0; i<(*structBuffers.ptrP2Buf).size();i++){
+        out << (int16_t) (*structBuffers.ptrP2Buf)[i].x;//read one point2c x dimension
+        out << (int16_t) (*structBuffers.ptrP2Buf)[i].z;
+    }
+    out.device()->seek(0);//pointer to buff start
+    out << quint64(buff.size() - sizeof(quint64));//write buff size at beginning
+    qDebug("  tamaño antes enviado: %lu",(buff.size()-sizeof(quint64))) ;//DEBUG
+    qDebug("  tamaño vector = %lu",(*structBuffers.ptrP2Buf).size());
+    skt_2d->write(buff);//enviamos
 }
 
 /*!
- * \brief incoming connection bind to a socket in order to I/O data
+ * \brief answer incoming connection; bind to a socket in order to I/O data
  */
 void AttendClient::incomingBarrido()
 {
@@ -446,6 +497,7 @@ void AttendClient::sendBarrido()
     qDebug("  tamaño antes enviado: %lu",(buff.size() - sizeof(quint64))) ;//DEBUG
     skt_barrido->write(buff);//send to client
 }
+
 
 void AttendClient::incomingAccel()
 {

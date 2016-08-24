@@ -329,47 +329,54 @@ void MainWindow::loop()
 {
     flag = 1;
     while( flag ){
-        timeVector.resize(0);
+
         QTime t;
+        timeVector[e_video]=0;
+        timeVector[e_depth]=0;
+        timeVector[e_3]=0;
+        timeVector[e_2]=0;
+        timeVector[e_barrido]=0;
+        timeVector[e_accel]=0;
 
         t.start();//---------------------------------------------time.start
         device->getRGB(videoBuf);
-        timeVector.push_back(t.elapsed());//---------------------timeVector[e_video]
+        timeVector[e_video]=t.elapsed();//---------------------timeVector[e_video]
         if( ui->tab_2->m_srvK.m_bEnvioColor ){
             videoDataReady();//paint video on gvVideo
         }
 
         t.start();//---------------------------------------------time.start
         device->getDepth(depthBuf);
-        timeVector.push_back(t.elapsed());//---------------------timeVector[1]
+        timeVector[e_depth]=t.elapsed();//---------------------timeVector[e_depth]
         if( ui->tab_2->m_srvK.m_bEnvioDepth )
             depthDataReady();//paint depth on gvDepth
 
 //        qApp->processEvents();//stay responsive to button click
 
-        if( ui->tab_2->m_srvK.m_bEnvio3D && ui->tab_2->m_srvK.m_bEnvioBarrido){//all buffers
+        if( ui->tab_2->m_srvK.m_bEnvio3D && ui->tab_2->m_srvK.m_bEnvio2D && ui->tab_2->m_srvK.m_bEnvioBarrido){//all buffers
             t.start();//---------------------------------------------time.start
             //device->getAll(p3Buf,barridoBuf);
             device->getAll(&structBuffers,&ui->tab_2->m_srvK);
-            timeVector.push_back(t.elapsed());//---------------------timeVector[2]
+            timeVector[e_3] = t.elapsed();//---------------------timeVector[e_3]
 
-            t.start();//---------------------------------------------time.start
-            ui->glWidget->setpCloud(p3Buf,p3Buf.size());///---DEBUG remove p3Buf.size()
+            //paint 3d + 2d
+            ui->glWidget->setCloud(p3Buf);
+            ui->glWidget->setCloud(p2Buf);
             ui->glWidget->repaint();//paint points cloud on glwidget
             timeVector.push_back(t.elapsed());//---------------------timeVector[3]
             t.start();//---------------------------------------------time.start
             barridoDataReady();//paint Barrido (barre)
             timeVector.push_back(t.elapsed());//---------------------timeVector[4]
-        }
-
-        printTimeVector(timeVector);
-
-        if(!(ui->tab_2->m_srvK.m_bEnvio3D) && ui->tab_2->m_srvK.m_bEnvioBarrido){//only swept ("barrido")
+            qDebug("  3D+2D+barrido");
+        }else if(ui->tab_2->m_srvK.m_bEnvio3D && !(ui->tab_2->m_srvK.m_bEnvio2D) && ui->tab_2->m_srvK.m_bEnvioBarrido){
             t.start();//---------------------------------------------time.start
+            device->get3d(&structBuffers,&ui->tab_2->m_srvK);
+            timeVector.push_back(t.elapsed());//---------------------timeVector[2]
+
             device->getBarrido(barridoBuf);
             timeVector.push_back(t.elapsed());//---------------------timeVector[5]
             barridoDataReady();//paint Barrido (barre)
-            qDebug("NO DEBERÍA ESTAR EN SOLO BARRE");
+            qDebug("  3D+barrido");
         }else if(ui->tab_2->m_srvK.m_bEnvio2D){
             t.start();//---------------------------------------------time.start
             device->get2(p2Buf);//to control 2D calc

@@ -35,7 +35,8 @@ signals:
     void zRotChange(int angle);
 
 public slots:
-    void setpCloud(std::vector<point3c> c, int count);
+    void setCloud(std::vector<point3c> c);
+    void setCloud(std::vector<point2> d);
     void initializeGL() Q_DECL_OVERRIDE;
     void paintGL() Q_DECL_OVERRIDE;
     void resizeGL(int width, int height) Q_DECL_OVERRIDE;
@@ -49,8 +50,9 @@ public slots:
     void drawLines();//aux ground level lines, esto es de RAUL
 
 private:
-    std::mutex mtxCloud;//think better if it's neccesary
-    std::vector<point3c> pCloud;//!< keep points cloud info
+//    std::mutex mtxCloud;//think better if it's neccesary
+    std::vector<point3c> pcloud_3d;//!< keep points cloud info
+    std::vector<point2> pcloud_2d;
     int sizeCloud;//!< number of points should = pCloud.size()
 
     QColor clearColor;

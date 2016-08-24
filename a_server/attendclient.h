@@ -78,6 +78,7 @@ private:
     QTcpServer *s_2d;
     QTcpSocket *skt_2d;
     quint64 size2d;
+    quint8 flag2d;
 
     QTcpServer *s_barrido;
     QTcpSocket *skt_barrido;

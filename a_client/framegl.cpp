@@ -31,8 +31,8 @@ FrameGL::FrameGL(QWidget *parent) : QOpenGLWidget(parent)
 //    xRot = yRot = zRot = 0;
     anglex = angley = 0;
     zoom = 1;
-    pCloud.resize(0);
-    sizeCloud=0;
+    pcloud_3d.resize(0);
+    pcloud_2d.resize(0);
 }
 /*!
  * \brief FrameGL::~FrameGL
@@ -77,19 +77,30 @@ void FrameGL::setClearColor(const QColor &color)
     clearColor = color;
     update();
 }
+
 /*!
- * \brief FrameGL::setpCloud
- * \param c
- * \param count
+ * \brief save incomming point cloud into pcloud_3d
+ *
+ * Overloaded function that allow to save 3d and 2d point cloud
+ * \param [in] c 3d+color point cloud to save
  */
-void FrameGL::setpCloud(std::vector<point3c> c, int count)
+void FrameGL::setCloud(std::vector<point3c> c)
 {
-    sizeCloud = count;
-    std::lock_guard<std::mutex> lock(mtxCloud);//actually not necesary, its the only fuction writting on pCloud
-    pCloud=c;
+    //std::lock_guard<std::mutex> lock(mtxCloud);//actually not necesary, its the only fuction writting on pCloud
+    pcloud_3d=c;
 }
 /*!
- * \brief FrameGL::initializeGL
+ * \brief save incomming point cloud into pcloud_2d
+ *
+ * Overloaded function that allow to save 3d and 2d point cloud
+ * \param [in] d 2d point cloud to save
+ */
+void FrameGL::setCloud(std::vector<point2> d)
+{
+    pcloud_2d=d;
+}
+/*!
+ * \brief Set geometry of GL view
  */
 void FrameGL::initializeGL()
 {
@@ -107,8 +118,7 @@ void FrameGL::initializeGL()
     glMatrixMode(GL_MODELVIEW);
 }
 /*!
- * \brief FrameGL::paintGL
- * where points are draw and point of view set.
+ * \brief where points are draw and point of view set.
  */
 void FrameGL::paintGL()
 {
@@ -122,7 +132,7 @@ void FrameGL::paintGL()
     // Define una transformacion de vision.Punto de vista XYZ, centro de la
     // escena donde se mira XYZ y vector de direccion ascendente
     //gluLookAt(ptoVista[0],ptoVista[1],ptoVista[2],0.0,0.0,5000.0,0.0,-1.0,0.0);
-    gluLookAt(-7*anglex, -7*angley,-1000.0,    0.0,-1000.0,5000.0,   0.0,-1.0,0.0);
+    gluLookAt(-7*anglex, -7*angley-1000,-3000.0,    0.0,-1000.0,3000.0,   0.0,-1.0,0.0);
     glScalef(zoom, zoom, 1);
 
     //glRotatef(m_x,1.0f, 0.0f, 0.0f); // Rotacion X (ángulo, vector alrededor del que giras)
@@ -135,7 +145,7 @@ void FrameGL::paintGL()
     glPopMatrix();
 }
 /*!
- * \brief FrameGL::resizeGL
+ * \brief Adapt GL window to new size
  * \param width
  * \param height
  */
@@ -153,8 +163,7 @@ void FrameGL::mousePressEvent(QMouseEvent *event)
     lastPosition = event->pos();
 }
 /*!
- * \brief FrameGL::mouseMoveEvent
- * to change point of view of 3D image with drag&drop
+ * \brief to change point of view of 3D image with drag&drop
  * \param event
  */
 void FrameGL::mouseMoveEvent(QMouseEvent *event)
@@ -166,8 +175,7 @@ void FrameGL::mouseMoveEvent(QMouseEvent *event)
     lastPosition = event->pos();
 }
 /*!
- * \brief FrameGL::wheelEvent
- * if wheel rotate zooms FrameGL
+ * \brief if wheel rotate zooms FrameGL
  * \param event
  */
 void FrameGL::wheelEvent(QWheelEvent *event)
@@ -181,8 +189,7 @@ void FrameGL::wheelEvent(QWheelEvent *event)
     event->accept();
 }
 /*!
- * \brief FrameGL::mouseReleaseEvent
- * to shot drag&drop signal to calculate move event
+ * \brief to shot drag&drop signal to calculate move event
  * \param event
  */
 void FrameGL::mouseReleaseEvent(QMouseEvent *event)
@@ -190,23 +197,34 @@ void FrameGL::mouseReleaseEvent(QMouseEvent *event)
     emit clicked();
 }
 /*!
- * \brief FrameGL::drawCloud  draw points cloud
+ * \brief draw points cloud
+ *
+ * Draw 3d+color if pcloud_3d has data (size>0) and
+ * draw 2d in red color at heigh=0 if pcloud_2d >0
  */
 void FrameGL::drawCloud()
 {
     glPointSize(1.0f);
     glBegin(GL_POINTS);
-        if(pCloud.size()>0){
-            for(int i = 0; i < pCloud.size(); i++){
-                glColor3b(pCloud[i].color.rgbRed,pCloud[i].color.rgbGreen,pCloud[i].color.rgbBlue);
-                glVertex3s(pCloud[i].x,pCloud[i].y,pCloud[i].z);
+        if(pcloud_3d.size()>0){
+            for(int i = 0; i < pcloud_3d.size(); i++){
+                glColor3b(pcloud_3d[i].color.rgbRed,pcloud_3d[i].color.rgbGreen,pcloud_3d[i].color.rgbBlue);
+                glVertex3s(pcloud_3d[i].x,pcloud_3d[i].y,pcloud_3d[i].z);
+            }
+        }
+
+        glColor3ub(255,0,0);
+        if(pcloud_2d.size()>0){
+            for(int i = 0; i < pcloud_2d.size(); i++){
+                glVertex3s(pcloud_2d[i].x,0,pcloud_2d[i].z);
             }
         }
     glEnd();
+    pcloud_3d.resize(0);
+    pcloud_2d.resize(0);
 }
 /*!
- * \brief FrameGL::drawAxis
- * Ox red, Oy green and Oz blue
+ * \brief Ox red, Oy green and Oz blue
  */
 void FrameGL::drawAxis()
 {
@@ -225,8 +243,7 @@ void FrameGL::drawAxis()
     glEnd();
 }
 /*!
- * \brief FrameGL::drawLines
- * draw auxiliary lines paralel to axis
+ * \brief draw auxiliary lines paralel to axis
  */
 void FrameGL::drawLines()
 {

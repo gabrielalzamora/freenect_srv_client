@@ -95,18 +95,19 @@ typedef struct pBuf{
 }pBuf;
 
 /*!
- * \brief to easy locate times in timeVector
+ * \brief to easy locate variables in vectors
  *
  * In server it contains time; but in client it's used
  * for frequency control.
  */
-enum timeControl {
-    time_video,
-    time_depth,
-    time_3,
-    time_2,
-    time_barrido,
-    time_xtra
+enum eOption {
+    e_video,
+    e_depth,
+    e_3,
+    e_2,
+    e_barrido,
+    e_accel,
+    e_xtra
 };
 
 #endif // TYPEKINECT_H

@@ -43,6 +43,9 @@ private slots:
     void finalize3D();
     void readData3D();
     //2D
+    void init2D();
+    void finalize2D();
+    void readData2D();
     //barrido
     void barridoAxes();
     void initBarrido();
@@ -51,31 +54,32 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-//    QString host;
     QHostAddress hostAddr;//------------------DEBUG
-//    int port;//------------------DEBUG
     QTcpSocket *skt_srvK;
     int connectedServer;
-//Video
+    //Video
     QTcpSocket *skt_video;
     int connectedVideo;
     quint64 sizeVideo;
     QGraphicsScene *sceneVideo;
     QGraphicsItem *itemVideo;
-//Depth
+    //Depth
     QTcpSocket *skt_depth;
     int connectedDepth;
     quint64 sizeDepth;
     QGraphicsScene *sceneDepth;
     QGraphicsItem *itemDepth;
-//3D
+    //3D
     QTcpSocket *skt_3D;
     int connected3D;
     quint64 size3D;
     std::vector<point3c> p3Buf;
-//2D
+    //2D
     QTcpSocket *skt_2D;
-//Barrido
+    int connected2D;
+    quint64 size2D;
+    std::vector<point2>p2Buf;
+    //Barrido
     QTcpSocket *skt_barrido;
     int connectedBarrido;
     quint64 sizeBarrido;
@@ -83,10 +87,10 @@ private:
     QGraphicsEllipseItem *ellipse;//!< holds single Barrido point to add to sceneBarrido
     std::vector<QGraphicsEllipseItem*> ellipseVector;//!< holds barrido points to paint in ellipse
     std::vector<uint32_t> barridoBuf;
-
+//Accel
     QTcpSocket *skt_accel;
     std::vector<int> timeVector;//msecs
-    QTime qt_video, qt_depth, qt_3, qt_2, qt_barrido;
+    QTime qt_loop, qt_video, qt_depth, qt_3, qt_2, qt_barrido;
 };
 
 #endif // MAINWINDOW_H

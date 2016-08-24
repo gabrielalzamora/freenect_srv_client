@@ -36,27 +36,31 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     connectedServer = 0;
     skt_srvK = new QTcpSocket(this);
-//video
+    //video
     skt_video = new QTcpSocket(this);
     connectedVideo = 0;
     sizeVideo = 0;
     sceneVideo = new QGraphicsScene(this);
     ui->gvVideo->setScene(sceneVideo);
-//depth
+    //depth
     skt_depth = new QTcpSocket(this);
     connectedDepth = 0;
     sizeDepth = 0;
     sceneDepth = new QGraphicsScene(this);
     ui->gvDepth->setScene(sceneDepth);
-//3D
+    //3D
     skt_3D = new QTcpSocket(this);
     connected3D = 0;
     size3D = 0;
     p3Buf.reserve(300000);
     p3Buf.resize(0);
 //2D
-
-//barrido
+    skt_2D = new QTcpSocket(this);
+    connected2D = 0;
+    size2D = 0;
+    p2Buf.reserve(300000);
+    p2Buf.resize(0);
+    //barrido
     skt_barrido = new QTcpSocket(this);
     connectedBarrido = 0;
     sizeBarrido = 0;
@@ -67,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ellipseVector.reserve(360);
     ellipseVector.resize(0);
     ellipse = NULL;
+//accel
 
     qt_video.start();
     qt_depth.start();
@@ -81,27 +86,30 @@ MainWindow::MainWindow(QWidget *parent) :
     timeVector[e_barrido]=0;
 
     connect(ui->lineEdit,SIGNAL(editingFinished()),this,SLOT(setHost()));
-//    setHost();///----------------------------DEBUG
 
     connect(ui->pbGo,SIGNAL(released()),this,SLOT(initConnection()));
     connect(ui->pbStop,SIGNAL(released()),this,SLOT(closeConnection()));
 
     connect(ui->tab_2,SIGNAL(dataChanged()),this,SLOT(dataChanged()));
     connect(ui->tab_2,SIGNAL(ledOptionChanged()),this,SLOT(dataChanged()));
-    //Video button + socket got new data
+
     connect(ui->pbVideo,SIGNAL(released()),this,SLOT(initVideo()));
     connect(skt_video,SIGNAL(readyRead()),this,SLOT(readDataVideo()));
-    //Depth button + socket got new data
+
     connect(ui->pbDepth,SIGNAL(released()),this,SLOT(initDepth()));
     connect(skt_depth,SIGNAL(readyRead()),this,SLOT(readDataDepth()));
-    //3D button + socket got new data
+
     connect(ui->pb3D,SIGNAL(released()),this,SLOT(init3D()));
     connect(skt_3D,SIGNAL(readyRead()),this,SLOT(readData3D()));
-    //2D button + socket got new data
 
-    //Barrido button + socket got new data
+    connect(ui->pb2D,SIGNAL(released()),this,SLOT(init2D()));
+    connect(skt_2D,SIGNAL(readyRead()),this,SLOT(readData2D()));
+
     connect(ui->pbBarrido,SIGNAL(released()),this,SLOT(initBarrido()));
     connect(skt_barrido,SIGNAL(readyRead()),this,SLOT(readDataBarrido()));
+
+    //connect(ui->pbAccel,SIGNAL(released()),this,SLOT(initAccel()));
+    //connect(skt_accel,SIGNAL(readyRead()),this,SLOT(readDataAccel()));
 
     barridoAxes();
 }
@@ -407,7 +415,7 @@ void MainWindow::readDataDepth()
 /*!
  * \brief start/stop 3D connection to server
  *
- * clicked twice stops depth
+ * clicked twice stops 3d
  */
 void MainWindow::init3D()
 {
@@ -456,7 +464,9 @@ void MainWindow::finalize3D()
     skt_3D->disconnectFromHost();
     connected3D = 0;
 }
-
+/*!
+ * \brief read 3d data and show on gui
+ */
 void MainWindow::readData3D()
 {
     qDebug("MainClient::readData3D");
@@ -486,7 +496,7 @@ void MainWindow::readData3D()
         p3Buf.push_back(aux3);//store in p3Buf (3D vector)
     }
 qDebug("  tamaño vector %lu",p3Buf.size());
-    ui->glWidget->setpCloud(p3Buf,p3Buf.size());
+    ui->glWidget->setCloud(p3Buf);
     ui->glWidget->repaint();
 
     //---------------------------request next image to server
@@ -499,6 +509,100 @@ qDebug("  tamaño vector %lu",p3Buf.size());
     skt_3D->write(buff);//enviamos
 
     size3D = 0;//to allow get next point cloud size3D
+}
+
+/*!
+ * \brief start/stop 2D connection to server
+ *
+ * clicked twice stops 2d
+ */
+void MainWindow::init2D()
+{
+    qDebug("MainClient::init2D");
+    if( connected2D ){//second click disconnects
+        finalize2D();
+        ui->textBrowser->append("- 2D closed ");
+        return;
+    }else{
+        skt_2D->connectToHost(hostAddr,TWOPORT);
+        if( !skt_2D->waitForConnected(3000) ){
+            ui->textBrowser->setText(skt_2D->errorString());
+            qDebug("  client 2D NOT connected = %d",connected2D);
+            return;
+        }
+        //connect(skt_2D,SIGNAL(readyRead()),this,SLOT(readData2D()));
+        connected2D = 1;
+        ui->textBrowser->append("- 2D connected");
+    }
+    //---------------------------request 1st image to server
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(1);
+    out.device()->seek(0);
+    out << quint64(buff.size() - sizeof(quint64));
+    skt_2D->write(buff);
+    qDebug("  tamaño 2D antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+}
+/*!
+ * \brief stop 2D connection to server
+ */
+void MainWindow::finalize2D()
+{
+    qDebug("MainClient::finalize2D");
+    //---------------------------request STOP server
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(0);//tell 0 to server = stop
+    out.device()->seek(0);
+    out << quint64(buff.size() - sizeof(quint64));
+    skt_2D->write(buff);//send 0 to server
+    //qDebug("  tamaño depth antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+
+    skt_2D->disconnectFromHost();
+    connected2D = 0;
+}
+/*!
+ * \brief read 2d data and show on gui
+ */
+void MainWindow::readData2D()
+{
+    qDebug("MainClient::readData2D");
+    QDataStream ioStream(skt_2D);
+    ioStream.setVersion(QDataStream::Qt_5_0);
+    p2Buf.resize(0);//still has memory allocated (reserved), but size = 0
+    point2 aux2;//remember aux2 = x & z
+
+    if(size2D == 0){
+        if(skt_2D->bytesAvailable() < (int)sizeof(quint64))
+            return;//size2D info completed-----or-------return
+        ioStream >> size2D;
+        qDebug("  tamaño recibido %llu",size2D);
+    }
+    if(skt_2D->bytesAvailable() < (size2D-sizeof(quint64)))
+        return;//wait till all 2D data received
+
+//-----------------------------------read & paint 2D
+    for(int i=0;i<(size2D/sizeof(point2));i++){
+        ioStream >> aux2.x;//read one point2c x dimension
+        ioStream >> aux2.z;
+        p2Buf.push_back(aux2);//store in p2Buf (2D vector)
+    }
+qDebug("  tamaño vector %lu",p2Buf.size());
+    ui->glWidget->setCloud(p2Buf);
+    ui->glWidget->repaint();
+
+    //---------------------------request next image to server
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(1);
+    out.device()->seek(0);//puntero a inicio buff
+    out << quint64(buff.size() - sizeof(quint64));//escribimos tamaño buf al principio
+    skt_2D->write(buff);//enviamos
+
+    size2D = 0;//to allow get next point cloud size2D
 }
 
 /*!
