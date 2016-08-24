@@ -73,7 +73,7 @@ MainWindow::~MainWindow()
 /*!
  * \brief draw video image
  *
- * This function is called when paint new frame data is needed.
+ * This function is called to paint new video data (new frame or image available).
  * Is painted on ui->gvVideo sceneVideo using data from 'videoBuf' vector data.
  */
 void MainWindow::videoDataReady()
@@ -86,7 +86,7 @@ void MainWindow::videoDataReady()
 /*!
  * \brief draw depth image
  *
- * This function is called when paint new frame data is needed.
+ * This function is called to paint new depth data (new frame or image available).
  * Is painted on ui->gvDepth sceneDepth using data from 'depthBuf' vector data.
  */
 void MainWindow::depthDataReady()
@@ -334,7 +334,7 @@ void MainWindow::loop()
 
         t.start();//---------------------------------------------time.start
         device->getRGB(videoBuf);
-        timeVector.push_back(t.elapsed());//---------------------timeVector[0]
+        timeVector.push_back(t.elapsed());//---------------------timeVector[e_video]
         if( ui->tab_2->m_srvK.m_bEnvioColor ){
             videoDataReady();//paint video on gvVideo
         }

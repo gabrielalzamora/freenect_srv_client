@@ -35,32 +35,50 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connectedServer = 0;
-    connectedVideo = 0;
     skt_srvK = new QTcpSocket(this);
-    connectedServer = 0;
-
+//video
     skt_video = new QTcpSocket(this);
     connectedVideo = 0;
     sizeVideo = 0;
     sceneVideo = new QGraphicsScene(this);
     ui->gvVideo->setScene(sceneVideo);
-
+//depth
     skt_depth = new QTcpSocket(this);
     connectedDepth = 0;
     sizeDepth = 0;
     sceneDepth = new QGraphicsScene(this);
     ui->gvDepth->setScene(sceneDepth);
-    //3D
-    //2D
+//3D
+    skt_3D = new QTcpSocket(this);
+    connected3D = 0;
+    size3D = 0;
+    p3Buf.reserve(300000);
+    p3Buf.resize(0);
+//2D
+
+//barrido
     skt_barrido = new QTcpSocket(this);
     connectedBarrido = 0;
     sizeBarrido = 0;
     sceneBarrido = new QGraphicsScene(this);
     ui->gvBarrido->setScene(sceneBarrido);
+    p3Buf.resize(300000);//reserve for maximum number of points
     barridoBuf.resize(360);
     ellipseVector.reserve(360);
     ellipseVector.resize(0);
     ellipse = NULL;
+
+    qt_video.start();
+    qt_depth.start();
+    qt_3.start();
+    qt_2.start();
+    qt_barrido.start();
+    timeVector.resize(e_xtra);
+    timeVector[e_video]=0;
+    timeVector[e_depth]=0;
+    timeVector[e_3]=0;
+    timeVector[e_2]=0;
+    timeVector[e_barrido]=0;
 
     connect(ui->lineEdit,SIGNAL(editingFinished()),this,SLOT(setHost()));
 //    setHost();///----------------------------DEBUG
@@ -70,13 +88,18 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->tab_2,SIGNAL(dataChanged()),this,SLOT(dataChanged()));
     connect(ui->tab_2,SIGNAL(ledOptionChanged()),this,SLOT(dataChanged()));
-
+    //Video button + socket got new data
     connect(ui->pbVideo,SIGNAL(released()),this,SLOT(initVideo()));
     connect(skt_video,SIGNAL(readyRead()),this,SLOT(readDataVideo()));
+    //Depth button + socket got new data
     connect(ui->pbDepth,SIGNAL(released()),this,SLOT(initDepth()));
     connect(skt_depth,SIGNAL(readyRead()),this,SLOT(readDataDepth()));
-    //3D
-    //2D
+    //3D button + socket got new data
+    connect(ui->pb3D,SIGNAL(released()),this,SLOT(init3D()));
+    connect(skt_3D,SIGNAL(readyRead()),this,SLOT(readData3D()));
+    //2D button + socket got new data
+
+    //Barrido button + socket got new data
     connect(ui->pbBarrido,SIGNAL(released()),this,SLOT(initBarrido()));
     connect(skt_barrido,SIGNAL(readyRead()),this,SLOT(readDataBarrido()));
 
@@ -201,8 +224,8 @@ void MainWindow::socketErrorVideo()
  */
 void MainWindow::initVideo()
 {
-    qDebug("MainClient::initVideo");
-    qDebug("  connectedVideo = %i",connectedVideo);
+    //qDebug("MainClient::initVideo");
+    //qDebug("  connectedVideo = %i",connectedVideo);
     if( connectedVideo ){//second click disconnects
         finalizeVideo();
         ui->textBrowser->append("- video closed ");
@@ -217,7 +240,7 @@ void MainWindow::initVideo()
         //connect(skt_video,SIGNAL(readyRead()),this,SLOT(readDataVideo()));
         connectedVideo = 1;
         ui->textBrowser->append("- video connected");
-        qDebug("  connectedVideo = %i",connectedVideo);
+        //qDebug("  connectedVideo = %i",connectedVideo);
     }
     //---------------------------request 1st image to server
     QByteArray buff;
@@ -227,16 +250,17 @@ void MainWindow::initVideo()
     out.device()->seek(0);
     out << quint64(buff.size() - sizeof(quint64));
     skt_video->write(buff);
-    qDebug() << buff;
+    //qDebug("  tamaño video antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+    //qDebug() << buff;
 }
 /*!
  * \brief stop video connection to server
  */
 void MainWindow::finalizeVideo()
 {
-    qDebug("MainClient::finalizeVideo");
-    qDebug("  connectedVideo = %i",connectedVideo);
-    connectedVideo = 0;
+    //qDebug("MainClient::finalizeVideo");
+    //qDebug("  connectedVideo = %i",connectedVideo);
+    //connectedVideo = 0;
     //---------------------------request STOP server
     QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
@@ -248,9 +272,9 @@ void MainWindow::finalizeVideo()
     skt_video->write(buff);//send 0 to server
 
     skt_video->disconnectFromHost();
-    //connectedVideo = 0;
-    qDebug("  connectedVideo = %i",connectedVideo);
-    qDebug() << buff;
+    connectedVideo = 0;
+    //qDebug("  connectedVideo = %i",connectedVideo);
+    //qDebug() << buff;
 }
 /*!
  * \brief read video data and show on gui
@@ -276,13 +300,16 @@ void MainWindow::readDataVideo()
     sceneVideo->addPixmap(QPixmap::fromImage(image).scaled(320,240,Qt::KeepAspectRatio));
     ui->gvVideo->show();
 
+    //-------------------------------control refresh condition
+
+
     //---------------------------request next image to server
     QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(1);
-    out.device()->seek(0);//puntero a inicio buff
-    out << quint64(buff.size() - sizeof(quint64));//escribimos tamaño buf al principio
+    out.device()->seek(0);//pointer to buff start
+    out << quint64(buff.size() - sizeof(quint64));//write size at buff start
     skt_video->write(buff);//enviamos
 
     sizeVideo = 0;//to allow get next img sizeVideo
@@ -326,7 +353,7 @@ void MainWindow::initDepth()
  */
 void MainWindow::finalizeDepth()
 {
-    qDebug("MainClient::finalizeDepth");
+    //qDebug("MainClient::finalizeDepth");
     //---------------------------request STOP server
     QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
@@ -353,6 +380,7 @@ void MainWindow::readDataDepth()
         if(skt_depth->bytesAvailable() < (int)sizeof(quint64))
             return;//wait till sizeDepth completed-----or-------return
         ioStream >> sizeDepth;
+
     }
     if(skt_depth->bytesAvailable() < (sizeDepth-sizeof(quint64)))
         return;//wait till all image data received
@@ -374,6 +402,103 @@ void MainWindow::readDataDepth()
     skt_depth->write(buff);//enviamos
 
     sizeDepth = 0;//to allow get next img sizeDepth
+}
+
+/*!
+ * \brief start/stop 3D connection to server
+ *
+ * clicked twice stops depth
+ */
+void MainWindow::init3D()
+{
+    qDebug("MainClient::init3D");
+    if( connected3D ){//second click disconnects
+        finalize3D();
+        ui->textBrowser->append("- 3D closed ");
+        return;
+    }else{
+        skt_3D->connectToHost(hostAddr,THREEPORT);
+        if( !skt_3D->waitForConnected(3000) ){
+            ui->textBrowser->setText(skt_3D->errorString());
+            qDebug("  client 3D NOT connected = %d",connected3D);
+            return;
+        }
+        //connect(skt_3D,SIGNAL(readyRead()),this,SLOT(readData3D()));
+        connected3D = 1;
+        ui->textBrowser->append("- 3D connected");
+    }
+    //---------------------------request 1st image to server
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(1);
+    out.device()->seek(0);
+    out << quint64(buff.size() - sizeof(quint64));
+    skt_3D->write(buff);
+    qDebug("  tamaño 3D antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+}
+/*!
+ * \brief stop 3D connection to server
+ */
+void MainWindow::finalize3D()
+{
+    qDebug("MainClient::finalize3D");
+    //---------------------------request STOP server
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(0);//tell 0 to server = stop
+    out.device()->seek(0);
+    out << quint64(buff.size() - sizeof(quint64));
+    skt_3D->write(buff);//send 0 to server
+    //qDebug("  tamaño depth antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+
+    skt_3D->disconnectFromHost();
+    connected3D = 0;
+}
+
+void MainWindow::readData3D()
+{
+    qDebug("MainClient::readData3D");
+    QDataStream ioStream(skt_3D);
+    ioStream.setVersion(QDataStream::Qt_5_0);
+    p3Buf.resize(0);//still has memory allocated (reserved), but size = 0
+    point3c aux3;//remember aux3 = x, y, z & color(red, green, blue & reserved)
+
+    if(size3D == 0){
+        if(skt_3D->bytesAvailable() < (int)sizeof(quint64))
+            return;//size3D info completed-----or-------return
+        ioStream >> size3D;
+        qDebug("  tamaño recibido %llu",size3D);
+    }
+    if(skt_3D->bytesAvailable() < (size3D-sizeof(quint64)))
+        return;//wait till all 3D data received
+
+//-----------------------------------read & paint 3D
+    for(int i=0;i<(size3D/sizeof(point3c));i++){
+        ioStream >> aux3.x;//read one point3c x dimension
+        ioStream >> aux3.y;
+        ioStream >> aux3.z;
+        ioStream >> aux3.color.rgbRed;//read point3c color red component
+        ioStream >> aux3.color.rgbGreen;
+        ioStream >> aux3.color.rgbBlue;
+        ioStream >> aux3.color.rgbReserved;
+        p3Buf.push_back(aux3);//store in p3Buf (3D vector)
+    }
+qDebug("  tamaño vector %lu",p3Buf.size());
+    ui->glWidget->setpCloud(p3Buf,p3Buf.size());
+    ui->glWidget->repaint();
+
+    //---------------------------request next image to server
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(1);
+    out.device()->seek(0);//puntero a inicio buff
+    out << quint64(buff.size() - sizeof(quint64));//escribimos tamaño buf al principio
+    skt_3D->write(buff);//enviamos
+
+    size3D = 0;//to allow get next point cloud size3D
 }
 
 /*!
@@ -408,7 +533,7 @@ void MainWindow::initBarrido()
         skt_barrido->connectToHost(hostAddr,BARRIDOPORT);
         if( !skt_barrido->waitForConnected(3000) ){
             ui->textBrowser->setText(skt_barrido->errorString());
-            qDebug("  client DEPTH NOT connected = %d",connectedDepth);
+            qDebug("  client Barrido NOT connected = %d",connectedBarrido);
             return;
         }
         //connect(skt_barrido,SIGNAL(readyRead()),this,SLOT(readDataBarrido()));
@@ -449,7 +574,7 @@ void MainWindow::finalizeBarrido()
  */
 void MainWindow::readDataBarrido()
 {
-    qDebug("MainClient::readDataBarrido");
+    //qDebug("MainClient::readDataBarrido");
     QDataStream in(skt_barrido);
     in.setVersion(QDataStream::Qt_5_0);///---------DEBUG
 
@@ -475,7 +600,7 @@ void MainWindow::readDataBarrido()
     for(int i=0;i<360;i++){
         in >> auxBarrido;//read incomming data
         barridoBuf[i] = auxBarrido;//store in barrido vector
-        qDebug("  compara read %lu con vector %u", auxBarrido, barridoBuf[i]);
+        //qDebug("  compara read %u con vector %u", auxBarrido, barridoBuf[i]);
         if(barridoBuf[i] == 0) continue;//no data info no plot
         y = (H/2)-((H/2)*barridoBuf[i]/ui->tab_2->m_srvK.m_fZMax);//divide barridoBuf[i] by max distance to fit in screen
         x = (W/2)*(360-i)/360;//make it fit in window W*H
@@ -493,7 +618,7 @@ void MainWindow::readDataBarrido()
     out.device()->seek(0);//puntero a inicio buff
     out << quint64(buff.size() - sizeof(quint64));//escribimos tamaño buf al principio
     skt_barrido->write(buff);//enviamos
-    qDebug("  barrido envia tamaño %lu",(buff.size() - sizeof(quint64)));
+    //qDebug("  barrido envia tamaño %lu",(buff.size() - sizeof(quint64)));
 
-    sizeBarrido = 0;//to allow get next img sizeDepth
+    sizeBarrido = 0;//to allow get next img sizeBarrido
 }

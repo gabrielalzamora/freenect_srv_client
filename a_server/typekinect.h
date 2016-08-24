@@ -82,7 +82,7 @@ typedef struct srvKinect{
 }srvKinect;
 
 /*!
- * \struct pBuf busca ejemplos en manual Doxygen
+ * \struct pBuf
  * \brief holds pointers to all kinect and derived data
  */
 typedef struct pBuf{
@@ -93,5 +93,20 @@ typedef struct pBuf{
     std::vector<uint32_t> *ptrBarridoBuf;//!< barridoBuf contains distance to closer object on angle (360-i)/2 degrees, xOz plane (horizontal to camera)
     std::vector<double> *ptrAccel;//!< acceleration components x,y,z (y ~ 9,81 if m_iAnguloKinect=0)
 }pBuf;
+
+/*!
+ * \brief to easy locate times in timeVector
+ *
+ * In server it contains time; but in client it's used
+ * for frequency control.
+ */
+enum timeControl {
+    time_video,
+    time_depth,
+    time_3,
+    time_2,
+    time_barrido,
+    time_xtra
+};
 
 #endif // TYPEKINECT_H

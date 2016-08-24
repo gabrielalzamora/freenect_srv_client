@@ -36,10 +36,11 @@ public slots:
     void incomingDepth();
     void sendDepth();
 
-    void incoming3d();
-    void send3d();
-    void incoming2d();
-    void send2d();
+    void incoming3D();
+    void send3D();
+
+    void incoming2D();
+    void send2D();
 
     void incomingBarrido();
     void sendBarrido();
@@ -72,6 +73,7 @@ private:
     QTcpServer *s_3d;
     QTcpSocket *skt_3d;
     quint64 size3d;
+    quint8 flag3d;
 
     QTcpServer *s_2d;
     QTcpSocket *skt_2d;

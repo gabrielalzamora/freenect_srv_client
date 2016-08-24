@@ -116,28 +116,20 @@ AttendClient::~AttendClient()
 void AttendClient::startServers()
 {
     s_video = new QTcpServer(this);
-    //skt_video = new QTcpSocket(this);
-
     s_depth = new QTcpServer(this);
-
     s_3d = new QTcpServer(this);
-
     s_2d = new QTcpServer(this);
-
     s_barrido = new QTcpServer(this);
-
     s_accel = new QTcpServer(this);
-
 
     s_video->listen(QHostAddress::Any,VIDEOPORT);
     connect(s_video,SIGNAL(newConnection()),this,SLOT(incomingVideo()));
-
     s_depth->listen(QHostAddress::Any,DEPTHPORT);
     connect(s_depth,SIGNAL(newConnection()),this,SLOT(incomingDepth()));
     s_3d->listen(QHostAddress::Any,THREEPORT);
-    connect(s_3d,SIGNAL(newConnection()),this,SLOT(incoming3d()));
+    connect(s_3d,SIGNAL(newConnection()),this,SLOT(incoming3D()));
     s_2d->listen(QHostAddress::Any,TWOPORT);
-    connect(s_2d,SIGNAL(newConnection()),this,SLOT(incoming2d()));
+    connect(s_2d,SIGNAL(newConnection()),this,SLOT(incoming2D()));
     s_barrido->listen(QHostAddress::Any,BARRIDOPORT);
     connect(s_barrido,SIGNAL(newConnection()),this,SLOT(incomingBarrido()));
     s_accel->listen(QHostAddress::Any,ACCELPORT);
@@ -319,22 +311,80 @@ void AttendClient::sendDepth()
     skt_depth->write(buff);//enviamos
 }
 
-void AttendClient::incoming3d()
+/*!
+ * \brief incoming connection bind to a socket in order to I/O data
+ */
+void AttendClient::incoming3D()
+{
+    skt_3d = s_3d->nextPendingConnection();
+    connect(skt_3d,SIGNAL(readyRead()),this,SLOT(send3D()));
+}
+
+void AttendClient::send3D()
+{
+    qDebug("AttendClient::send3D");
+    if(skt_3d->peerAddress() == peerAddr){//AttendClient only attend single client
+        qDebug("  es mi cliente :o)");
+
+    }else{///-------Al revés -> cuando acabes DEBUG  if != return (menos código, más simple)
+        qDebug("  otro cliente :o(  %u yo %u ",skt_3d->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+        return;//if client is not our client wait for next connection
+    }///--------------- cuando simplificado quita else{} -----------------DEBUG
+
+    //-------------------------------------------------------read client msg
+    QDataStream in(skt_3d);//read client petition
+    in.setVersion(QDataStream::Qt_5_0);
+
+    if (size3d == 0) {//check there's enough bytes to read
+        if (skt_3d->bytesAvailable() < sizeof(quint64))
+            return;
+        in >> size3d;//read and save into quint64 size3d
+    }
+    if (skt_3d->bytesAvailable() < size3d){//check there's enough bytes to read
+        return;//if not wait till you have all data size 3D says
+    }
+
+    in >> flag3d;//flag = 0 will stop and disconnect, != 0 send image
+    //qDebug("tamaño: %llu  info: %u", size3d, flag3d);//DEBUG
+    size3d = 0;//to allow reading next message size
+
+    if( !flag3d ){
+        skt_3d->disconnectFromHost();
+        qDebug("Cliente ordena desconectar 3d");
+        return;
+    }//--------------- only goes ahead if all data received & flag3d != 0
+
+//----------------------------------------------------------------create & send 3d vector
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+
+    //qDebug("  tamaño vector = %lu",(*structBuffers.ptrP3Buf).size());
+
+    out << qint64(0);//let space for size info
+
+    for(uint i = 0; i<(*structBuffers.ptrP3Buf).size();i++){
+        out << (int16_t) (*structBuffers.ptrP3Buf)[i].x;//read one point3c x dimension
+        out << (int16_t) (*structBuffers.ptrP3Buf)[i].y;
+        out << (int16_t) (*structBuffers.ptrP3Buf)[i].z;
+        out << (uint8_t) (*structBuffers.ptrP3Buf)[i].color.rgbRed;//read point3c color red component
+        out << (uint8_t) (*structBuffers.ptrP3Buf)[i].color.rgbGreen;
+        out << (uint8_t) (*structBuffers.ptrP3Buf)[i].color.rgbBlue;
+        out << (uint8_t) (*structBuffers.ptrP3Buf)[i].color.rgbReserved;
+    }
+    out.device()->seek(0);//pointer to buff start
+    out << quint64(buff.size() - sizeof(quint64));//write buff size at beginning
+    qDebug("  tamaño antes enviado: %lu",(buff.size()-sizeof(quint64))) ;//DEBUG
+    qDebug("  tamaño vector = %lu",(*structBuffers.ptrP3Buf).size());
+    skt_3d->write(buff);//enviamos
+}
+
+void AttendClient::incoming2D()
 {
 
 }
 
-void AttendClient::send3d()
-{
-
-}
-
-void AttendClient::incoming2d()
-{
-
-}
-
-void AttendClient::send2d()
+void AttendClient::send2D()
 {
 
 }
