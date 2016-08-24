@@ -385,7 +385,7 @@ void MainWindow::loop()
         }
 
         //printTimeVector(timeVector);
-
+//------------------------------------------pinta aceleraciones---------------
         qApp->processEvents();//stay responsive to button click
     }
 }
@@ -422,6 +422,7 @@ void MainWindow::printTimeVector(std::vector<int> &timeV)
     str.append(aux);
     aux.setNum(timeV[4]);
     str.append(aux);
+    //pinta las aceleraciones----------------------
     ui->textEdit->setText(str);
 }
 

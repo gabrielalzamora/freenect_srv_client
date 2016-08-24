@@ -50,6 +50,16 @@ typedef struct point2{
 }point2;
 
 /*!
+ * \struct accel
+ * \brief acceleration detected components.
+ */
+typedef struct accel{
+    double accel_x;
+    double accel_y;
+    double accel_z;
+}accel;
+
+/*!
  * \struct srvKinect
  * \brief contain all Data information (but led).
  *

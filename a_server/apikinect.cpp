@@ -27,9 +27,8 @@ Apikinect::Apikinect(freenect_context *_ctx, int _index)
       m_buffer_depth(freenect_find_depth_mode(FREENECT_RESOLUTION_MEDIUM, FREENECT_DEPTH_REGISTERED).bytes / 2),
       m_new_rgb_frame(false), m_new_depth_frame(false)
 {
+    myself = const_cast<freenect_device*>(this->getDevice());//las vueltas que da la vida :o)
     setDepthFormat(FREENECT_DEPTH_REGISTERED);
-
-    m_buffer_B.resize(360);
 }
 
 /*!
@@ -91,7 +90,11 @@ bool Apikinect::getDepth(std::vector<uint16_t> &buffer)
 }
 
 /*!
- * \brief funtion to retrieve point cloud & swetp ("barre") from video & depth data.
+ * \brief funtion to retrieve point cloud & barrido (swept) from video & depth data.
+ *
+ * Return 3D point cloud (2D may be retrieved from it) and barrido (swept)
+ * in camera coordinates (Oz to where camera is looking, Ox right hand and
+ * Oy downward to Oz)
  * \param [out] buffer3 buffer to receive point cloud.
  * \param [out] bufferB buffer to receive Barrido (swept).
  */
@@ -102,7 +105,7 @@ void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &buf
     buffer3.resize(0);
     for(int i=0;i<360;i++) bufferB[i]=0;
     float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
-    //------------------------------------------------------time pre buffers
+
     for (int i = 0; i < 480*640; ++i)
     {
         // Convert from image plane coordinates to world coordinates
@@ -115,20 +118,20 @@ void Apikinect::getAll(std::vector<point3c> &buffer3, std::vector<uint32_t> &buf
             color.rgbReserved = 0;
             p3.color = color;
             buffer3.push_back(p3);//MainWindow::p3Buf
-//time pre barrer
+
             int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
             uint32_t length = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
             if( bufferB[index]==0 || bufferB[index]>length)
                 bufferB[index]=length;
-//time post barrer  difference*numpoints = time barrer
         }
-    }//----------------------------------------------------------time post buffers
+    }
 }
 /*!
  * \brief funtion to retrieve 3D, 2D & Barrido from video & depth data.
  *
  * From video, depth frames and srvKinect store 3D, 2D & Barrido in
- * structBuffers buffers in world coordinates.
+ * structBuffers buffers in world coordinates (Oz horizontal ahead,
+ * Ox horizontal right hand and Oy downwards).
  * \param [out] structBuffers points to struct holding buffers.
  * \param [in] aSrvKinect configuration data.
  */
@@ -141,7 +144,7 @@ void Apikinect::getAll(pBuf *structBuffers, srvKinect *aSrvKinect)
     structBuffers->ptrP2Buf->resize(0);//reset 2D points cloud
     for(int i=0;i<360;i++) (*structBuffers->ptrBarridoBuf)[i]=0;//reset Barrido vector
     float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
-    //------------------------------------------------------time pre buffers
+
     for (int i = 0; i < 480*640; i+=aSrvKinect->m_usModulo3D)
     {
         // Convert from image plane coordinates to world coordinates
@@ -183,6 +186,10 @@ void Apikinect::getAll(pBuf *structBuffers, srvKinect *aSrvKinect)
 
 /*!
  * \brief 3 dimension + color point cloud in buffer from video & depth data.
+ *
+ * World coordinates are from camera point of view, Oz points in
+ * the same direction of the camera, Ox to the right and Oy points
+ * downwards.
  * \param [out] buffer  where point cloud is stored.
  */
 void Apikinect::get3d(std::vector<point3c> &buffer)
@@ -205,12 +212,49 @@ void Apikinect::get3d(std::vector<point3c> &buffer)
             buffer.push_back(p3);//MainWindow::p3Buf
         }
     }
-    //time post buffers
 }
-
+/*!
+ * \brief funtion to retrieve 3D from video & depth data.
+ *
+ * From video, depth frames and srvKinect store 3D in
+ * structBuffers buffers in world coordinates Oz to the front
+ * Ox to the right and Oy points downwards.
+ * \param [out] structBuffers points to struct holding buffers.
+ * \param [in] aSrvKinect configuration data.
+ */
 void Apikinect::get3d(pBuf *structBuffers, srvKinect *aSrvKinect)
 {
+    point3c p3;//3D + color points cloud
+    RGBQ color;
+    structBuffers->ptrP3Buf->resize(0);//reset 3D points cloud
 
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
+    //------------------------------------------------------time pre buffers
+    for (int i = 0; i < 480*640; i+=aSrvKinect->m_usModulo3D)
+    {
+        // Convert from image plane coordinates to world coordinates
+        // Z into screen, Y downwards, X to right as OpenGL
+        // Z = depth*cos(angleKinect)-y*sin(angleKinect)  if angleKinect around x axis
+        p3.z = m_buffer_depth[i]*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0);
+
+        //within z limits
+        if( (p3.z != 0) && (p3.z <= aSrvKinect->m_fZMax) ){
+            // Y = (y - cy) * d / fy but remember angleKinect plus camera high
+            // Y = y*cos(angleKinect)+depth*sin(angleKinect)-CameraHigh if angleKinect around Ox axis
+            p3.y = ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) + m_buffer_depth[i]*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - aSrvKinect->m_fAltura*1000;
+
+            //within y limits
+            if( (p3.y >= (-1)*aSrvKinect->m_fYMax) && (p3.y <= (-1)*aSrvKinect->m_fYMin) ){//within y limits (remember Y downwards)
+                p3.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;// X = (x - cx) * d / fx
+                color.rgbRed = m_buffer_video[3*i+0];    // R
+                color.rgbGreen = m_buffer_video[3*i+1];  // G
+                color.rgbBlue = m_buffer_video[3*i+2];   // B
+                color.rgbReserved = 0;
+                p3.color = color;
+                structBuffers->ptrP3Buf->push_back(p3);//stored in MainWindow::p3Buf
+            }
+        }
+    }
 }
 
 /*!
@@ -222,7 +266,7 @@ void Apikinect::get2(std::vector<point2> &buffer)
     point2 p2;
     buffer.resize(1);
     float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
-    //------------------------------------------------------time pre buffers
+
     for (int i = 0; i < 480*640; ++i)
     {
         // Convert from image plane coordinates to world coordinates
@@ -230,22 +274,63 @@ void Apikinect::get2(std::vector<point2> &buffer)
             p2.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;      // X = (x - cx) * d / fx
             buffer.push_back(p2);//MainWindow::p2Buf
         }
-    }//----------------------------------------------------------time post buffers
+    }
+}
+/*!
+ * \brief funtion to retrieve 2D from video & depth data.
+ *
+ * From video, depth frames and srvKinect store 3D in
+ * structBuffers buffers in world coordinates Oz to the front
+ * Ox to the right and Oy points downwards.
+ * \param [out] structBuffers points to struct holding buffers.
+ * \param [in] aSrvKinect configuration data.
+ */
+void Apikinect::get2(pBuf *structBuffers, srvKinect *aSrvKinect)
+{
+    point2 p2;//2 dimensions points cloud
+    point3c p3;//3D + color points cloud
+    structBuffers->ptrP2Buf->resize(0);//reset 2D points cloud
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
+
+    for (int i = 0; i < 480*640; i+=aSrvKinect->m_usModulo3D){
+        // Convert from image plane coordinates to world coordinates
+        // Z into screen, Y downwards, X to right as OpenGL
+        // Z = depth*cos(angleKinect)-y*sin(angleKinect)  if angleKinect around x axis
+        p3.z = m_buffer_depth[i]*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0);
+
+        //within z limits
+        if( (p3.z != 0) && (p3.z <= aSrvKinect->m_fZMax) ){
+            // Y = (y - cy) * d / fy but remember angleKinect plus camera high
+            // Y = y*cos(angleKinect)+depth*sin(angleKinect)-CameraHigh if angleKinect around Ox axis
+            p3.y = ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) + m_buffer_depth[i]*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - aSrvKinect->m_fAltura*1000;
+
+            //within y limits
+            if( (p3.y >= (-1)*aSrvKinect->m_fYMax) && (p3.y <= (-1)*aSrvKinect->m_fYMin) ){//within y limits (remember Y downwards)
+                p2.z = p3.z;
+                p3.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;// X = (x - cx) * d / fx
+                p2.x = p3.x;
+
+                structBuffers->ptrP2Buf->push_back(p2);//stored in MainWindow::p2Buf
+            }
+        }
+    }
 }
 
 /*!
- * \brief distance vector, in angle
- * 360 vector with distance at each angle 0º where camara is centered
- * and from -89.5º to 90º each 1/2 degree (180*2=360 values)
+ * \brief distance to closer object function of angle you are looking at
+ *
+ * Vector index tells angle you are pointing, vector content is
+ * distance to closer object. 360 size vector with index 0 containing
+ * distance to closest object angle 90º to the right from where
+ * camara is pointing. Range from -89.5º to 90º each 1/2 degree (180*2=360 values)
  * \param buffer where 360 distance values are stored
- * \return number of points should be 360=buffer.size()
  */
 void Apikinect::getBarrido(std::vector<uint32_t> &buffer)
 {
     point3c p3;
     for(int i=0;i<360;i++) buffer[i]=0;
     float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
-    //------------------------------------------------------time pre buffers
+
     for (int i = 0; i < 480*640; ++i)
     {
         if( (p3.z = m_buffer_depth[i]) != 0  ){                  // Z = d
@@ -255,5 +340,71 @@ void Apikinect::getBarrido(std::vector<uint32_t> &buffer)
             if( buffer[index]==0 || buffer[index]>length)
                 buffer[index]=length;
         }
-    }//----------------------------------------------------------time post buffers
+    }
+}
+/*!
+ * \brief distance to closer object function of angle you are looking at
+ *
+ * Vector index tells angle you are pointing, vector content is
+ * distance to closer object. 360 size vector with index 0 containing
+ * distance to closest object angle 90º to the right from where
+ * camara is pointing. Range from -89.5º to 90º each 1/2 degree (180*2=360 values)
+ * \param [out] structBuffers points to struct holding buffers.
+ * \param [in] aSrvKinect configuration data.
+ */
+void Apikinect::getBarrido(pBuf *structBuffers, srvKinect *aSrvKinect)
+{
+    point3c p3;
+    for(int i=0;i<360;i++) (*structBuffers->ptrBarridoBuf)[i]=0;
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
+
+    for (int i = 0; i < 480*640; i+=aSrvKinect->m_usModulo3D)
+    {
+        // Convert from image plane coordinates to world coordinates
+        // Z into screen, Y downwards, X to right as OpenGL
+        // Z = depth*cos(angleKinect)-y*sin(angleKinect)  if angleKinect around x axis
+        p3.z = m_buffer_depth[i]*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0);
+
+        //within z limits
+        if( (p3.z != 0) && (p3.z <= aSrvKinect->m_fZMax) ){
+            // Y = (y - cy) * d / fy but remember angleKinect plus camera high
+            // Y = y*cos(angleKinect)+depth*sin(angleKinect)-CameraHigh if angleKinect around Ox axis
+            p3.y = ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) + m_buffer_depth[i]*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - aSrvKinect->m_fAltura*1000;
+
+            //within y limits
+            if( (p3.y >= (-1)*aSrvKinect->m_fYMax) && (p3.y <= (-1)*aSrvKinect->m_fYMin) ){//within y limits (remember Y downwards)
+                p3.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;// X = (x - cx) * d / fx
+
+                int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
+                uint32_t distance = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
+
+                //within Barrido limits
+                if( (distance < aSrvKinect->m_iBarridoEcu) && (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
+                    if( (*structBuffers->ptrBarridoBuf)[index]==0 || (*structBuffers->ptrBarridoBuf)[index]>distance )
+                        (*structBuffers->ptrBarridoBuf)[index]=distance;
+                }
+            }
+        }
+    }
+}
+
+void Apikinect::get3dBarrido(pBuf *structBuffers, srvKinect *aSrvKinect)
+{
+
+}
+
+void Apikinect::get2dBarrido(pBuf *structBuffers, srvKinect *aSrvKinect)
+{
+
+}
+
+void Apikinect::get2and3(pBuf *structBuffers, srvKinect *aSrvKinect)
+{
+
+}
+
+void Apikinect::getAccel(accel &a)
+{
+    freenect_update_tilt_state(myself);
+    freenect_get_mks_accel(freenect_get_tilt_state(myself), &a.accel_x, &a.accel_y, &a.accel_z);
 }
