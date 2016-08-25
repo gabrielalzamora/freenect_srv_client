@@ -8,11 +8,10 @@
  */
 
 #include "data.h"
-
 /*!
   \class Data
   \brief A class to handle configuration data
-  
+
   Used to show parámeters and allow input actions from user
   Used to allow update of server data with client data
  */
@@ -31,7 +30,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QLabel *DepthLabelrefresco = new QLabel(tr("refresco"));
         DepthSlider = new QSlider(Qt::Horizontal);
         DepthSlider->setTickPosition(QSlider::TicksBelow);
-        DepthSlider->setMinimum(1);
+        DepthSlider->setMinimum(33);
         DepthSlider->setMaximum(2000);
         DepthSlider->setSingleStep(200);
         DepthSlider->setValue(33);
@@ -60,7 +59,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QLabel *VideoLabelrefresco = new QLabel(tr("refresco"));
         VideoSlider = new QSlider(Qt::Horizontal);
         VideoSlider->setTickPosition(QSlider::TicksBelow);
-        VideoSlider->setMinimum(1);
+        VideoSlider->setMinimum(33);
         VideoSlider->setMaximum(2000);
         VideoSlider->setSingleStep(200);
         VideoSlider->setValue(33);
@@ -114,21 +113,21 @@ Data::Data(QWidget *parent) : QWidget(parent)
 
         QLabel *LimitsLabelYmin = new QLabel(tr("Y min"));
         LimitsLineEYmin = new QLineEdit();
-        LimitsLineEYmin->setText("0");
+        LimitsLineEYmin->setText("-1000");
         QHBoxLayout *LyYmin = new QHBoxLayout;
         LyYmin->addWidget(LimitsLabelYmin);
         LyYmin->addWidget(LimitsLineEYmin);
 
         QLabel *LimitsLabelYmax = new QLabel(tr("Y max"));
         LimitsLineEYmax = new QLineEdit();
-        LimitsLineEYmax->setText("1500");
+        LimitsLineEYmax->setText("2000");
         QHBoxLayout *LyYmax = new QHBoxLayout;
         LyYmax->addWidget(LimitsLabelYmax);
         LyYmax->addWidget(LimitsLineEYmax);
 
         QLabel *LimitsLabelZmax = new QLabel(tr("Z max"));
         LimitsLineEZmax = new QLineEdit();
-        LimitsLineEZmax->setText("4000");
+        LimitsLineEZmax->setText("10000");
         QHBoxLayout *LyZmax = new QHBoxLayout;
         LyZmax->addWidget(LimitsLabelZmax);
         LyZmax->addWidget(LimitsLineEZmax);
@@ -148,7 +147,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QLabel *PointsLabelrefresco = new QLabel(tr("refresco"));
         PointsSlider = new QSlider(Qt::Horizontal);
         PointsSlider->setTickPosition(QSlider::TicksBelow);
-        PointsSlider->setMinimum(1);
+        PointsSlider->setMinimum(33);
         PointsSlider->setMaximum(2000);
         PointsSlider->setSingleStep(200);
         PointsSlider->setValue(33);
@@ -193,7 +192,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
 
         QLabel *PointsLabelYmin = new QLabel(tr("Y min"));
         PointsLineEYmin = new QLineEdit();
-        PointsLineEYmin->setText("0");
+        PointsLineEYmin->setText("-1000");
         QHBoxLayout *LyPointsYmin = new QHBoxLayout;
         LyPointsYmin->addWidget(PointsLabelYmin);
         LyPointsYmin->addWidget(PointsLineEYmin);
@@ -205,7 +204,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
         LyPointsYmax->addWidget(PointsLineEYmax);
         QLabel *PointsLabelEcu = new QLabel(tr("Ecu"));
         PointsLineEEcu = new QLineEdit();
-        PointsLineEEcu->setText("7000");
+        PointsLineEEcu->setText("10000");
         QHBoxLayout *LyPointsEcu = new QHBoxLayout;
         LyPointsEcu->addWidget(PointsLabelEcu);
         LyPointsEcu->addWidget(PointsLineEEcu);
@@ -429,11 +428,11 @@ void Data::setVideoCBcomprimido(uint8_t value)
     if( value ) VideoCBcomprimido->setChecked(true);
     else VideoCBcomprimido->setChecked(false);
 }
-/*!
- * \brief Data::setVideoCBenvio
+/**
+ * @brief Data::setVideoCBenvio
  * check box to send video, value set
  * show client setting on server data tab
- * \param value
+ * @param value
  * uint8_t = 0 not checked, otherwise checked (send)
  */
 void Data::setVideoCBenvio(uint8_t value)
@@ -441,11 +440,11 @@ void Data::setVideoCBenvio(uint8_t value)
     if( value ) VideoCBenvio->setChecked(true);
     else VideoCBenvio->setChecked(false);
 }
-/*!
- * \brief Data::setVideoSlider
+/**
+ * @brief Data::setVideoSlider
  * refresh in msec request next video frame
  * show client setting on server data tab
- * \param value
+ * @param value
  * uint32_t from 1 to 2000 msec
  * below 33 msec is unrealistic
  */
@@ -456,11 +455,11 @@ void Data::setVideoSlider(uint32_t value)
     s.setNum(value);
     VideoLabelSlider->setText(s);
 }
-/*!
- * \brief Data::setDepthCBcomprimido
+/**
+ * @brief Data::setDepthCBcomprimido
  * check box to send depth compress, value set
  * show client setting on server data tab
- * \param value
+ * @param value
  * uint8_t = 0 not checked, otherwise checked (send compressed)
  */
 void Data::setDepthCBcomprimido(uint8_t value)
@@ -468,11 +467,11 @@ void Data::setDepthCBcomprimido(uint8_t value)
     if( value ) DepthCBcomprimido->setChecked(true);
     else DepthCBcomprimido->setChecked(false);
 }
-/*!
- * \brief Data::setDepthCBenvio
+/**
+ * @brief Data::setDepthCBenvio
  * check box to send depth, value set
  * show client setting on server data tab
- * \param value
+ * @param value
  * uint8_t = 0 not checked, otherwise checked (send)
  */
 void Data::setDepthCBenvio(uint8_t value)
@@ -480,11 +479,11 @@ void Data::setDepthCBenvio(uint8_t value)
     if( value ) DepthCBenvio->setChecked(true);
     else DepthCBenvio->setChecked(false);
 }
-/*!
- * \brief Data::setDepthSlider
+/**
+ * @brief Data::setDepthSlider
  * refresh in msec request next depth frame
  * show client setting on server data tab
- * \param value
+ * @param value
  * uint32_t from 1 to 2000 msec
  * below 33 msec is unrealistic
  */
@@ -495,11 +494,11 @@ void Data::setDepthSlider(uint32_t value)
     s.setNum(value);
     DepthLabelSlider->setText(s);
 }
-/*!
- * \brief Data::setPointsLineEYmax
+/**
+ * @brief Data::setPointsLineEYmax
  * set superior limit in mm to record data
  * show client setting on server data tab
- * \param value
+ * @param value
  * int32_t distance in mm respect ground level
  */
 void Data::setPointsLineEYmax(int32_t value)
@@ -508,10 +507,10 @@ void Data::setPointsLineEYmax(int32_t value)
     sY.setNum(value);
     PointsLineEYmax->setText(sY);
 }
-/*!
- * \brief Data::setPointsLineEYmin
+/**
+ * @brief Data::setPointsLineEYmin
  * set inferior limit in mm to record data
- * \param value
+ * @param value
  * int32_t distance in mm respect ground level
  */
 void Data::setPointsLineEYmin(int32_t value)
@@ -520,11 +519,11 @@ void Data::setPointsLineEYmin(int32_t value)
     sY.setNum(value);
     PointsLineEYmin->setText(sY);
 }
-/*!
- * \brief Data::setPointsLineEEcu
+/**
+ * @brief Data::setPointsLineEEcu
  * 'barrido' maximum distance in mm to record data
  * show client setting on server data tab
- * \param value
+ * @param value
  * uint32_t distance in mm
  */
 void Data::setPointsLineEEcu(int32_t value)
@@ -533,11 +532,11 @@ void Data::setPointsLineEEcu(int32_t value)
     s.setNum(value);
     PointsLineEEcu->setText(s);
 }
-/*!
- * \brief Data::setPointsCBcomprimido
+/**
+ * @brief Data::setPointsCBcomprimido
  * check box to send 'barrido' compress value set
  * show client setting on server data tab
- * \param value
+ * @param value
  * uint8_t = 0 not checked, otherwise checked (send compressed)
  */
 void Data::setPointsCBcomprimido(uint8_t value)
@@ -545,11 +544,11 @@ void Data::setPointsCBcomprimido(uint8_t value)
     if( value ) PointsCBcomprimido->setChecked(true);
     else PointsCBcomprimido->setChecked(false);
 }
-/*!
- * \brief Data::setPointsCBenvioB
+/**
+ * @brief Data::setPointsCBenvioB
  * check box to send 'barrido' value set
  * show client setting on server data tab
- * \param value
+ * @param value
  * uint8_t = 0 not checked, otherwise checked (send)
  */
 void Data::setPointsCBenvioB(uint8_t value)
@@ -557,41 +556,35 @@ void Data::setPointsCBenvioB(uint8_t value)
     if( value ) PointsCBenvioB->setChecked(true);
     else PointsCBenvioB->setChecked(false);
 }
-/*!
- * \brief Data::setPointsCBenvio2
- * set value on 2D check box.
- *
- * Update check box to send 2D points to
- * show client setting on server data tab.
- * Used to update server data to match client.
- * \param value
- * [in] = 0 not checked, otherwise checked (send data)
+/**
+ * @brief Data::setPointsCBenvio2
+ * check box to send 2D points value set
+ * show client setting on server data tab
+ * @param value
+ * uint8_t = 0 not checked, otherwise checked (send)
  */
 void Data::setPointsCBenvio2(uint8_t value)
 {
     if( value ) PointsCBenvio2->setChecked(true);
     else PointsCBenvio2->setChecked(false);
 }
-/*!
- * \brief Data::setPointsCBenvio3D
- * set value on 3D check box.
- *
- * Update check box to send 3D points to
- * show client setting on server data tab.
- * Used to update server data to match client.
- * \param [in] value
- * = 0 not checked, otherwise checked (send data)
+/**
+ * @brief Data::setPointsCBenvio3D
+ * check box to send 3D points value set
+ * show client setting on server data tab
+ * @param value
+ * uint8_t = 0 not checked, otherwise checked (send)
  */
 void Data::setPointsCBenvio3D(uint8_t value)
 {
     if( value ) PointsCBenvio3D->setChecked(true);
     else PointsCBenvio3D->setChecked(false);
 }
-/*!
- * \brief Data::setPointsSliderM
+/**
+ * @brief Data::setPointsSliderM
  * from how many points pick one to add to point cloud
  * show client setting on server data tab
- * \param value
+ * @param value
  * uint8_t from 1 (all selected 100%) to 10 (10% selected)
  */
 void Data::setPointsSliderM(uint8_t value)
@@ -601,11 +594,11 @@ void Data::setPointsSliderM(uint8_t value)
     s.setNum(value);
     PointsLabelSliderM->setText(s);
 }
-/*!
- * \brief Data::setPointsSlider
+/**
+ * @brief Data::setPointsSlider
  * refresh in msec request next point cloud
  * show client setting on server data tab
- * \param value
+ * @param value
  * uint32_t from 1 to 2000 msec
  * below 33 msec is unrealistic
  */
@@ -616,11 +609,11 @@ void Data::setPointsSlider(uint32_t value)
     s.setNum(value);
     PointsLabelSlider->setText(s);
 }
-/*!
- * \brief Data::setLimitsLineEZmax
+/**
+ * @brief Data::setLimitsLineEZmax
  * maximum distance in mm to record data
  * show client setting on server data tab
- * \param value
+ * @param value
  * double distance in mm from camera to
  * longest distance data recorded
  */
@@ -630,11 +623,11 @@ void Data::setLimitsLineEZmax(double value)
     sZ.setNum(value);
     LimitsLineEZmax->setText(sZ);
 }
-/*!
- * \brief Data::setLimitsLineEYmax
+/**
+ * @brief Data::setLimitsLineEYmax
  * maximum high in mm to record data
  * show client setting on server data tab
- * \param value
+ * @param value
  * double distance in mm from ground to
  * highest data to be shown
  */
@@ -644,11 +637,11 @@ void Data::setLimitsLineEYmax(double value)
     sY.setNum(value);
     LimitsLineEYmax->setText(sY);
 }
-/*!
- * \brief Data::setLimitsLineEYmin
+/**
+ * @brief Data::setLimitsLineEYmin
  * minimum hight in mm to start data record
  * show client setting on server data tab
- * \param value
+ * @param value
  * double distance in mm from ground to
  * lowest data to be shown
  */
@@ -658,11 +651,11 @@ void Data::setLimitsLineEYmin(double value)
     sY.setNum(value);
     LimitsLineEYmin->setText(sY);
 }
-/*!
- * \brief Data::setLimitsLineEAltura
+/**
+ * @brief Data::setLimitsLineEAltura
  * high of camera above ground in meters
  * show client setting on server data tab
- * \param value
+ * @param value
  * double distance in meters to ground from camera
  */
 void Data::setLimitsLineEAltura(double value)
@@ -671,11 +664,11 @@ void Data::setLimitsLineEAltura(double value)
     sA.setNum(value);
     LimitsLineEAltura->setText(sA);
 }
-/*!
- * \brief Data::setLimitsLineEAngK
+/**
+ * @brief Data::setLimitsLineEAngK
  * angle of kinect camera respect horizontal
  * show client setting on server data tab
- * \param value
+ * @param value
  * integer to set camera angle horizontal = 0º limits(-30 30)
  */
 void Data::setLimitsLineEAngK(int8_t value)
@@ -692,11 +685,11 @@ void Data::setLimitsLineEAngK(int8_t value)
     sAngulo.setNum(value);
     LimitsLineEAngK->setText(sAngulo);
 }
-/*!
- * \brief Data::setLimitsLineEAngulo
+/**
+ * @brief Data::setLimitsLineEAngulo
  * angle of kinect base
  * show client setting on server data tab
- * \param value
+ * @param value
  * double to set angle, horizontal = 0º
  */
 void Data::setLimitsLineEAngulo(double value)

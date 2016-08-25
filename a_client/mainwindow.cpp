@@ -1,17 +1,14 @@
-
+/*
+ * Copyright (c) 2016  Gabriel Alzamora.
+ *
+ * This code is licensed to you under the terms of the
+ * GNU General Public License. See LICENSE file for the
+ * text of the license, or the following URL:
+ * https://www.gnu.org/licenses/gpl.html
+ */
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
-#define W 640
-#define H 480
-#define SRVKPORT 10003
-#define DEPTHPORT 10004
-#define VIDEOPORT 10005
-#define THREEPORT 10006
-#define TWOPORT 10007
-#define BARRIDOPORT 10008
-#define ACCELPORT 10009
 
 /*!
  * \class MainWindow
@@ -54,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent) :
     size3D = 0;
     p3Buf.reserve(300000);
     p3Buf.resize(0);
-//2D
+    //2D
     skt_2D = new QTcpSocket(this);
     connected2D = 0;
     size2D = 0;
@@ -71,19 +68,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ellipseVector.reserve(360);
     ellipseVector.resize(0);
     ellipse = NULL;
-//accel
-
-    qt_video.start();
-    qt_depth.start();
-    qt_3.start();
-    qt_2.start();
-    qt_barrido.start();
-    timeVector.resize(e_xtra);
-    timeVector[e_video]=0;
-    timeVector[e_depth]=0;
-    timeVector[e_3]=0;
-    timeVector[e_2]=0;
-    timeVector[e_barrido]=0;
+    //accel
+    skt_accel = new QTcpSocket(this);
+    connectedAccel = 0;
+    sizeAccel = 0;
+    acceleration.accel_x = acceleration.accel_y = acceleration.accel_z = 0.0;
 
     connect(ui->lineEdit,SIGNAL(editingFinished()),this,SLOT(setHost()));
 
@@ -108,8 +97,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->pbBarrido,SIGNAL(released()),this,SLOT(initBarrido()));
     connect(skt_barrido,SIGNAL(readyRead()),this,SLOT(readDataBarrido()));
 
-    //connect(ui->pbAccel,SIGNAL(released()),this,SLOT(initAccel()));
-    //connect(skt_accel,SIGNAL(readyRead()),this,SLOT(readDataAccel()));
+    connect(ui->pbAccel,SIGNAL(released()),this,SLOT(initAccel()));
+    connect(skt_accel,SIGNAL(readyRead()),this,SLOT(readDataAccel()));
 
     barridoAxes();
 }
@@ -125,7 +114,6 @@ MainWindow::~MainWindow()
     delete skt_depth;
     //...
 }
-
 /*!
  * \brief auxiliary function to read host written by user in GUI QLineEdit
  */
@@ -139,7 +127,6 @@ void MainWindow::setHost()
     ui->textBrowser->append(ui->lineEdit->text());
     ui->pbGo->setEnabled(true);
 }
-
 /*!
  * \brief send new srvKinect to server
  */
@@ -176,9 +163,36 @@ void MainWindow::dataChanged()
     skt_srvK->write(buff);
     //qDebug("  init tamaño enviado: %u", (buff.size()-sizeof(quint64)));//DEBUG
 }
-
 /*!
- * \brief connect to server and srvKinect update comm
+ * \brief utility function to request new data to socket (in Apikinect way)
+ * \param [in] socket to which request new info.
+ */
+void MainWindow::requestNext(QTcpSocket *socket)
+{
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(1);
+    out.device()->seek(0);
+    out << quint64(buff.size() - sizeof(quint64));
+    socket->write(buff);
+}
+/*!
+ * \brief utility function to request disconnect to socket (in Apikinect way)
+ * \param [in] socket to which request new info.
+ */
+void MainWindow::requestStop(QTcpSocket *socket)
+{
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+    out << quint64(0) << quint8(0);
+    out.device()->seek(0);
+    out << quint64(buff.size() - sizeof(quint64));
+    socket->write(buff);
+}
+/*!
+ * \brief Connect to server and srvKinect update comm.
  */
 void MainWindow::initConnection()
 {
@@ -207,17 +221,14 @@ void MainWindow::closeConnection()
     qDebug("MainClient::closeConnection");
     skt_srvK->disconnectFromHost();
     connectedServer = 0;
-    if(connectedVideo){///---------recuerda desconectar lo demás cuando esté-------DEBUG
+    if(connectedVideo){
         finalizeVideo();
     }
     if(connectedDepth){
         finalizeDepth();
     }
-    //...
-
     ui->pbGo->setEnabled(true);
     ui->pbStop->setEnabled(false);
-    //close();
 }
 
 void MainWindow::socketErrorVideo()
@@ -233,7 +244,6 @@ void MainWindow::socketErrorVideo()
 void MainWindow::initVideo()
 {
     //qDebug("MainClient::initVideo");
-    //qDebug("  connectedVideo = %i",connectedVideo);
     if( connectedVideo ){//second click disconnects
         finalizeVideo();
         ui->textBrowser->append("- video closed ");
@@ -250,16 +260,8 @@ void MainWindow::initVideo()
         ui->textBrowser->append("- video connected");
         //qDebug("  connectedVideo = %i",connectedVideo);
     }
-    //---------------------------request 1st image to server
-    QByteArray buff;
-    QDataStream out(&buff, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_0);
-    out << quint64(0) << quint8(1);
-    out.device()->seek(0);
-    out << quint64(buff.size() - sizeof(quint64));
-    skt_video->write(buff);
-    //qDebug("  tamaño video antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
-    //qDebug() << buff;
+    sizeVideo = 0;
+    requestNext(skt_video);//request next video image to server
 }
 /*!
  * \brief stop video connection to server
@@ -268,9 +270,8 @@ void MainWindow::finalizeVideo()
 {
     //qDebug("MainClient::finalizeVideo");
     //qDebug("  connectedVideo = %i",connectedVideo);
-    //connectedVideo = 0;
-    //---------------------------request STOP server
-    QByteArray buff;
+
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(0);//tell 0 to server = stop
@@ -278,7 +279,8 @@ void MainWindow::finalizeVideo()
     out << quint64(buff.size() - sizeof(quint64));
     //qDebug("  tamaño video antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
     skt_video->write(buff);//send 0 to server
-
+    */
+    requestStop(skt_video);//request STOP video to server
     skt_video->disconnectFromHost();
     connectedVideo = 0;
     //qDebug("  connectedVideo = %i",connectedVideo);
@@ -308,19 +310,8 @@ void MainWindow::readDataVideo()
     sceneVideo->addPixmap(QPixmap::fromImage(image).scaled(320,240,Qt::KeepAspectRatio));
     ui->gvVideo->show();
 
-    //-------------------------------control refresh condition
-
-
-    //---------------------------request next image to server
-    QByteArray buff;
-    QDataStream out(&buff, QIODevice::WriteOnly);
-    out.setVersion(QDataStream::Qt_5_0);
-    out << quint64(0) << quint8(1);
-    out.device()->seek(0);//pointer to buff start
-    out << quint64(buff.size() - sizeof(quint64));//write size at buff start
-    skt_video->write(buff);//enviamos
-
     sizeVideo = 0;//to allow get next img sizeVideo
+    requestNext(skt_video);//request to server new video frame
 }
 
 /*!
@@ -330,7 +321,7 @@ void MainWindow::readDataVideo()
  */
 void MainWindow::initDepth()
 {
-    qDebug("MainClient::initDepth");
+    //qDebug("MainClient::initDepth");
     if( connectedDepth ){//second click disconnects
         finalizeDepth();
         ui->textBrowser->append("- depth closed ");
@@ -342,19 +333,21 @@ void MainWindow::initDepth()
             qDebug("  client DEPTH NOT connected = %d",connectedDepth);
             return;
         }
-        //connect(skt_depth,SIGNAL(readyRead()),this,SLOT(readDataDepth()));
         connectedDepth = 1;
         ui->textBrowser->append("- depth connected");
     }
     //---------------------------request 1st image to server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(1);
     out.device()->seek(0);
     out << quint64(buff.size() - sizeof(quint64));
     skt_depth->write(buff);
-    qDebug("  tamaño depth antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+    //qDebug("  tamaño depth antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+    */
+    sizeDepth = 0;
+    requestNext(skt_depth);
 }
 /*!
  * \brief stop depth connection to server
@@ -363,7 +356,7 @@ void MainWindow::finalizeDepth()
 {
     //qDebug("MainClient::finalizeDepth");
     //---------------------------request STOP server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(0);//tell 0 to server = stop
@@ -371,7 +364,8 @@ void MainWindow::finalizeDepth()
     out << quint64(buff.size() - sizeof(quint64));
     skt_depth->write(buff);//send 0 to server
     //qDebug("  tamaño depth antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
-
+    */
+    requestStop(skt_depth);
     skt_depth->disconnectFromHost();
     connectedDepth = 0;
 }
@@ -401,15 +395,16 @@ void MainWindow::readDataDepth()
     ui->gvDepth->show();
 
     //---------------------------request next image to server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(1);
     out.device()->seek(0);//puntero a inicio buff
     out << quint64(buff.size() - sizeof(quint64));//escribimos tamaño buf al principio
     skt_depth->write(buff);//enviamos
-
+    */
     sizeDepth = 0;//to allow get next img sizeDepth
+    requestNext(skt_depth);
 }
 
 /*!
@@ -436,7 +431,7 @@ void MainWindow::init3D()
         ui->textBrowser->append("- 3D connected");
     }
     //---------------------------request 1st image to server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(1);
@@ -444,6 +439,9 @@ void MainWindow::init3D()
     out << quint64(buff.size() - sizeof(quint64));
     skt_3D->write(buff);
     qDebug("  tamaño 3D antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+    */
+    size3D = 0;
+    requestNext(skt_3D);
 }
 /*!
  * \brief stop 3D connection to server
@@ -452,7 +450,7 @@ void MainWindow::finalize3D()
 {
     qDebug("MainClient::finalize3D");
     //---------------------------request STOP server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(0);//tell 0 to server = stop
@@ -460,7 +458,8 @@ void MainWindow::finalize3D()
     out << quint64(buff.size() - sizeof(quint64));
     skt_3D->write(buff);//send 0 to server
     //qDebug("  tamaño depth antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
-
+    */
+    requestStop(skt_3D);
     skt_3D->disconnectFromHost();
     connected3D = 0;
 }
@@ -500,15 +499,16 @@ qDebug("  tamaño vector %lu",p3Buf.size());
     ui->glWidget->repaint();
 
     //---------------------------request next image to server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(1);
     out.device()->seek(0);//puntero a inicio buff
     out << quint64(buff.size() - sizeof(quint64));//escribimos tamaño buf al principio
     skt_3D->write(buff);//enviamos
-
+    */
     size3D = 0;//to allow get next point cloud size3D
+    requestNext(skt_3D);
 }
 
 /*!
@@ -535,7 +535,7 @@ void MainWindow::init2D()
         ui->textBrowser->append("- 2D connected");
     }
     //---------------------------request 1st image to server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(1);
@@ -543,6 +543,9 @@ void MainWindow::init2D()
     out << quint64(buff.size() - sizeof(quint64));
     skt_2D->write(buff);
     qDebug("  tamaño 2D antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+    */
+    size2D = 0;
+    requestNext(skt_2D);
 }
 /*!
  * \brief stop 2D connection to server
@@ -551,7 +554,7 @@ void MainWindow::finalize2D()
 {
     qDebug("MainClient::finalize2D");
     //---------------------------request STOP server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(0);//tell 0 to server = stop
@@ -559,7 +562,8 @@ void MainWindow::finalize2D()
     out << quint64(buff.size() - sizeof(quint64));
     skt_2D->write(buff);//send 0 to server
     //qDebug("  tamaño depth antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
-
+    */
+    requestStop(skt_2D);
     skt_2D->disconnectFromHost();
     connected2D = 0;
 }
@@ -568,7 +572,7 @@ void MainWindow::finalize2D()
  */
 void MainWindow::readData2D()
 {
-    qDebug("MainClient::readData2D");
+    //qDebug("MainClient::readData2D");
     QDataStream ioStream(skt_2D);
     ioStream.setVersion(QDataStream::Qt_5_0);
     p2Buf.resize(0);//still has memory allocated (reserved), but size = 0
@@ -589,20 +593,22 @@ void MainWindow::readData2D()
         ioStream >> aux2.z;
         p2Buf.push_back(aux2);//store in p2Buf (2D vector)
     }
-qDebug("  tamaño vector %lu",p2Buf.size());
+    //qDebug("  tamaño vector %lu",p2Buf.size());
     ui->glWidget->setCloud(p2Buf);
     ui->glWidget->repaint();
 
     //---------------------------request next image to server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(1);
     out.device()->seek(0);//puntero a inicio buff
     out << quint64(buff.size() - sizeof(quint64));//escribimos tamaño buf al principio
     skt_2D->write(buff);//enviamos
+    */
 
     size2D = 0;//to allow get next point cloud size2D
+    requestNext(skt_2D);
 }
 
 /*!
@@ -628,7 +634,7 @@ void MainWindow::barridoAxes()
  */
 void MainWindow::initBarrido()
 {
-    qDebug("MainClient::initBarrido");
+    //qDebug("MainClient::initBarrido");
     if( connectedBarrido ){//second click disconnects
         finalizeBarrido();
         ui->textBrowser->append("- barrido closed ");
@@ -645,7 +651,7 @@ void MainWindow::initBarrido()
         ui->textBrowser->append("- barrido connected");
     }
     //---------------------------request 1st data batch to server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(1);
@@ -653,15 +659,18 @@ void MainWindow::initBarrido()
     out << quint64(buff.size() - sizeof(quint64));
     skt_barrido->write(buff);
     qDebug("  tamaño antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+    */
+    sizeBarrido = 0;
+    requestNext(skt_barrido);
 }
 /*!
  * \brief stop barrido connection to server
  */
 void MainWindow::finalizeBarrido()
 {
-    qDebug("MainClient::finalizeBarrido");
+    //qDebug("MainClient::finalizeBarrido");
     //---------------------------tell STOP to server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(0);//tell server 0, stop
@@ -670,6 +679,8 @@ void MainWindow::finalizeBarrido()
     qDebug("  tamaño antes enviado: %lu", (buff.size()-sizeof(quint64)));///---DEBUG
     skt_barrido->write(buff);//send 0 to server
     //qDebug("  tamaño barrido antes enviado: %lu", (buff.size()-sizeof(quint64)));//DEBUG
+    */
+    requestStop(skt_barrido);
     skt_barrido->disconnectFromHost();
     connectedBarrido = 0;
 }
@@ -715,7 +726,7 @@ void MainWindow::readDataBarrido()
     ui->gvBarrido->show();
 //-------------------------------------------------------paint barrido
     //---------------------------request next image to server
-    QByteArray buff;
+    /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
     out << quint64(0) << quint8(1);
@@ -723,6 +734,83 @@ void MainWindow::readDataBarrido()
     out << quint64(buff.size() - sizeof(quint64));//escribimos tamaño buf al principio
     skt_barrido->write(buff);//enviamos
     //qDebug("  barrido envia tamaño %lu",(buff.size() - sizeof(quint64)));
-
+    */
     sizeBarrido = 0;//to allow get next img sizeBarrido
+    requestNext(skt_barrido);
+}
+
+void MainWindow::initAccel()
+{
+    //qDebug("MainClient::initAccel");
+    if( connectedAccel ){//second click disconnects
+        finalizeAccel();
+        ui->textBrowser->append("- accel closed ");
+        return;
+    }else{
+        skt_accel->connectToHost(hostAddr,ACCELPORT);
+        if( !skt_accel->waitForConnected(3000) ){
+            ui->textBrowser->setText(skt_accel->errorString());
+            qDebug("  client Accel NOT connected = %d",connectedAccel);
+            return;
+        }
+        //connect(skt_accel,SIGNAL(readyRead()),this,SLOT(readDataAccel()));
+        connectedAccel = 1;
+        ui->textBrowser->append("- accel connected");
+    }
+    sizeAccel = 0;
+    requestNext(skt_accel);
+}
+
+void MainWindow::finalizeAccel()
+{
+    //qDebug("MainClient::finalizeAccel");
+    requestStop(skt_accel);
+    skt_accel->disconnectFromHost();
+    connectedAccel = 0;
+}
+
+void MainWindow::readDataAccel()
+{
+    //qDebug("MainClient::readDataAccel");
+    QDataStream ioStream(skt_accel);
+    ioStream.setVersion(QDataStream::Qt_5_0);
+
+    if(sizeAccel == 0){
+        if(skt_accel->bytesAvailable() < (int)sizeof(quint64))
+            return;//size2D info completed-----or-------return
+        ioStream >> sizeAccel;
+        qDebug("  tamaño recibido %llu",sizeAccel);
+    }
+    if(skt_accel->bytesAvailable() < (sizeAccel-sizeof(quint64)))
+        return;//wait till all 2D data received
+
+//-----------------------------------read & paint 2D
+    ioStream >> acceleration.accel_x;
+    ioStream >> acceleration.accel_y;
+    ioStream >> acceleration.accel_z;
+
+    showAccel(acceleration);
+
+    sizeAccel = 0;
+    requestNext(skt_accel);
+}
+
+void MainWindow::showAccel(accel a)
+{
+    QString str = "aX = ";
+    QString aux;
+    aux.setNum(a.accel_x);
+    str.append(aux);
+    str.append("\n");
+    aux = "aY = ";
+    str.append(aux);
+    aux.setNum(a.accel_y);
+    str.append(aux);
+    str.append("\n");
+    aux = "aZ = ";
+    str.append(aux);
+    aux.setNum(a.accel_z);
+    str.append(aux);
+    str.append("\n");
+    ui->textBrowser->setText(str);
 }

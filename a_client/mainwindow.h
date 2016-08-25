@@ -1,7 +1,17 @@
+/*
+ * Copyright (c) 2016  Gabriel Alzamora.
+ *
+ * This code is licensed to you under the terms of the
+ * GNU General Public License. See LICENSE file for the
+ * text of the license, or the following URL:
+ * https://www.gnu.org/licenses/gpl.html
+ */
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
 #include <QTime>
+#include <QTimer>
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include <QGraphicsItem>
@@ -26,6 +36,8 @@ public slots:
     void dataChanged();
 
 private slots:
+    void requestNext(QTcpSocket *socket);
+    void requestStop(QTcpSocket *socket);
     //server
     void initConnection();
     void closeConnection();
@@ -51,6 +63,11 @@ private slots:
     void initBarrido();
     void finalizeBarrido();
     void readDataBarrido();
+    //accel
+    void initAccel();
+    void finalizeAccel();
+    void readDataAccel();
+    void showAccel(accel a);
 
 private:
     Ui::MainWindow *ui;
@@ -87,10 +104,12 @@ private:
     QGraphicsEllipseItem *ellipse;//!< holds single Barrido point to add to sceneBarrido
     std::vector<QGraphicsEllipseItem*> ellipseVector;//!< holds barrido points to paint in ellipse
     std::vector<uint32_t> barridoBuf;
-//Accel
+    //Accel
     QTcpSocket *skt_accel;
-    std::vector<int> timeVector;//msecs
-    QTime qt_loop, qt_video, qt_depth, qt_3, qt_2, qt_barrido;
+    int connectedAccel;
+    quint64 sizeAccel;
+    accel acceleration;
+
 };
 
 #endif // MAINWINDOW_H

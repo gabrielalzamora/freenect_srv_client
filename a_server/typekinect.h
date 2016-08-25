@@ -14,6 +14,16 @@
 #include <cstdint>
 #include <vector>
 
+#define W 640
+#define H 480
+#define SRVKPORT 10003
+#define DEPTHPORT 10004
+#define VIDEOPORT 10005
+#define THREEPORT 10006
+#define TWOPORT 10007
+#define BARRIDOPORT 10008
+#define ACCELPORT 10009
+
 /*!
  * \struct RGBQ
  * \brief color in RGB style 32bits long.
@@ -117,6 +127,7 @@ enum eOption {
     e_2,
     e_barrido,
     e_accel,
+    e_loop,
     e_xtra
 };
 

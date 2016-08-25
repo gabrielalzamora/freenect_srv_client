@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2016  Gabriel Alzamora.
+ *
+ * This code is licensed to you under the terms of the
+ * GNU General Public License. See LICENSE file for the
+ * text of the license, or the following URL:
+ * https://www.gnu.org/licenses/gpl.html
+ */
 
 #include "data.h"
 /*!
@@ -22,7 +30,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QLabel *DepthLabelrefresco = new QLabel(tr("refresco"));
         DepthSlider = new QSlider(Qt::Horizontal);
         DepthSlider->setTickPosition(QSlider::TicksBelow);
-        DepthSlider->setMinimum(1);
+        DepthSlider->setMinimum(33);
         DepthSlider->setMaximum(2000);
         DepthSlider->setSingleStep(200);
         DepthSlider->setValue(33);
@@ -51,7 +59,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QLabel *VideoLabelrefresco = new QLabel(tr("refresco"));
         VideoSlider = new QSlider(Qt::Horizontal);
         VideoSlider->setTickPosition(QSlider::TicksBelow);
-        VideoSlider->setMinimum(1);
+        VideoSlider->setMinimum(33);
         VideoSlider->setMaximum(2000);
         VideoSlider->setSingleStep(200);
         VideoSlider->setValue(33);
@@ -105,21 +113,21 @@ Data::Data(QWidget *parent) : QWidget(parent)
 
         QLabel *LimitsLabelYmin = new QLabel(tr("Y min"));
         LimitsLineEYmin = new QLineEdit();
-        LimitsLineEYmin->setText("0");
+        LimitsLineEYmin->setText("-1000");
         QHBoxLayout *LyYmin = new QHBoxLayout;
         LyYmin->addWidget(LimitsLabelYmin);
         LyYmin->addWidget(LimitsLineEYmin);
 
         QLabel *LimitsLabelYmax = new QLabel(tr("Y max"));
         LimitsLineEYmax = new QLineEdit();
-        LimitsLineEYmax->setText("1500");
+        LimitsLineEYmax->setText("2000");
         QHBoxLayout *LyYmax = new QHBoxLayout;
         LyYmax->addWidget(LimitsLabelYmax);
         LyYmax->addWidget(LimitsLineEYmax);
 
         QLabel *LimitsLabelZmax = new QLabel(tr("Z max"));
         LimitsLineEZmax = new QLineEdit();
-        LimitsLineEZmax->setText("4000");
+        LimitsLineEZmax->setText("10000");
         QHBoxLayout *LyZmax = new QHBoxLayout;
         LyZmax->addWidget(LimitsLabelZmax);
         LyZmax->addWidget(LimitsLineEZmax);
@@ -139,7 +147,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
         QLabel *PointsLabelrefresco = new QLabel(tr("refresco"));
         PointsSlider = new QSlider(Qt::Horizontal);
         PointsSlider->setTickPosition(QSlider::TicksBelow);
-        PointsSlider->setMinimum(1);
+        PointsSlider->setMinimum(33);
         PointsSlider->setMaximum(2000);
         PointsSlider->setSingleStep(200);
         PointsSlider->setValue(33);
@@ -184,7 +192,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
 
         QLabel *PointsLabelYmin = new QLabel(tr("Y min"));
         PointsLineEYmin = new QLineEdit();
-        PointsLineEYmin->setText("0");
+        PointsLineEYmin->setText("-1000");
         QHBoxLayout *LyPointsYmin = new QHBoxLayout;
         LyPointsYmin->addWidget(PointsLabelYmin);
         LyPointsYmin->addWidget(PointsLineEYmin);
@@ -196,7 +204,7 @@ Data::Data(QWidget *parent) : QWidget(parent)
         LyPointsYmax->addWidget(PointsLineEYmax);
         QLabel *PointsLabelEcu = new QLabel(tr("Ecu"));
         PointsLineEEcu = new QLineEdit();
-        PointsLineEEcu->setText("7000");
+        PointsLineEEcu->setText("10000");
         QHBoxLayout *LyPointsEcu = new QHBoxLayout;
         LyPointsEcu->addWidget(PointsLabelEcu);
         LyPointsEcu->addWidget(PointsLineEEcu);

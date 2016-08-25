@@ -10,14 +10,6 @@
 #include <vector>
 #include "attendclient.h"
 
-#define SRVKPORT 10003
-#define DEPTHPORT 10004
-#define VIDEOPORT 10005
-#define THREEPORT 10006
-#define TWOPORT 10007
-#define BARRIDOPORT 10008
-#define ACCELPORT 10009
-
 /*!
  * \class AttendClient
  * \brief is created for each client connected to server.
@@ -110,6 +102,7 @@ AttendClient::~AttendClient()
         s_accel->disconnect();
     }
 }
+
 /*!
  * \brief create servers to listen client
  */
@@ -373,8 +366,8 @@ void AttendClient::send3D()
     }
     out.device()->seek(0);//pointer to buff start
     out << quint64(buff.size() - sizeof(quint64));//write buff size at beginning
-    qDebug("  tamaño antes enviado: %lu",(buff.size()-sizeof(quint64))) ;//DEBUG
-    qDebug("  tamaño vector = %lu",(*structBuffers.ptrP3Buf).size());
+    //qDebug("  tamaño antes enviado: %lu",(buff.size()-sizeof(quint64))) ;//DEBUG
+    //qDebug("  tamaño vector = %lu",(*structBuffers.ptrP3Buf).size());
     skt_3d->write(buff);//enviamos
 }
 
@@ -391,7 +384,7 @@ void AttendClient::incoming2D()
  */
 void AttendClient::send2D()
 {
-    qDebug("AttendClient::send2D");
+    //qDebug("AttendClient::send2D");
     if(skt_2d->peerAddress() != peerAddr){//AttendClient only attend single client
         qDebug("  otro cliente :o(  %u yo %u ",skt_2d->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
         return;//if client is not our client wait for next connection
@@ -435,8 +428,8 @@ void AttendClient::send2D()
     }
     out.device()->seek(0);//pointer to buff start
     out << quint64(buff.size() - sizeof(quint64));//write buff size at beginning
-    qDebug("  tamaño antes enviado: %lu",(buff.size()-sizeof(quint64))) ;//DEBUG
-    qDebug("  tamaño vector = %lu",(*structBuffers.ptrP2Buf).size());
+    //qDebug("  tamaño antes enviado: %lu",(buff.size()-sizeof(quint64))) ;//DEBUG
+    //qDebug("  tamaño vector = %lu",(*structBuffers.ptrP2Buf).size());
     skt_2d->write(buff);//enviamos
 }
 
@@ -453,7 +446,7 @@ void AttendClient::incomingBarrido()
  */
 void AttendClient::sendBarrido()
 {
-    qDebug("AttendClient::sendBarrido");
+    //qDebug("AttendClient::sendBarrido");
 
     if(skt_barrido->peerAddress() != peerAddr){//AttendClient only attend single client
         qDebug("  otro cliente :o(  %u yo %u ",skt_barrido->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
@@ -474,7 +467,7 @@ void AttendClient::sendBarrido()
     }
 
     in >> flagBarrido;//flag = 0 will stop and disconnect, != 0 send barrido
-    qDebug("tamaño: %llu  info: %u", sizeBarrido, flagBarrido);//DEBUG
+    //qDebug("tamaño: %llu  info: %u", sizeBarrido, flagBarrido);//DEBUG
     sizeBarrido = 0;//to allow reading next message size
 
     if( !flagBarrido ){
@@ -494,17 +487,66 @@ void AttendClient::sendBarrido()
     }
     out.device()->seek(0);//point to buff beginning
     out << quint64(buff.size() - sizeof(quint64));//set buff size at beginning
-    qDebug("  tamaño antes enviado: %lu",(buff.size() - sizeof(quint64))) ;//DEBUG
+    //qDebug("  tamaño antes enviado: %lu",(buff.size() - sizeof(quint64))) ;//DEBUG
     skt_barrido->write(buff);//send to client
 }
 
-
+/*!
+ * \brief answer incoming connection; bind to a socket in order to I/O data
+ */
 void AttendClient::incomingAccel()
 {
-
+    skt_accel = s_accel->nextPendingConnection();
+    connect(skt_accel,SIGNAL(readyRead()),this,SLOT(sendAccel()));
 }
-
+/*!
+ * \brief send accel struct through skt_accel to client
+ */
 void AttendClient::sendAccel()
 {
+    //qDebug("AttendClient::sendAccel");
+    if(skt_accel->peerAddress() != peerAddr){//AttendClient only attend single client
+        qDebug("  otro cliente :o(  %u yo %u ",skt_accel->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+        return;//if client is not our client wait for next connection
+    }
 
+    //-------------------------------------------------------read client msg
+    QDataStream in(skt_accel);//read client petition
+    in.setVersion(QDataStream::Qt_5_0);
+
+    if (sizeAccel == 0) {//check there's enough bytes to read
+        if (skt_accel->bytesAvailable() < sizeof(quint64))
+            return;
+        in >> sizeAccel;//read and save into quint64 size2d
+    }
+    if (skt_accel->bytesAvailable() < sizeAccel){//check there's enough bytes to read
+        return;//if not wait till you have all data size 2D says
+    }
+
+    in >> flagAccel;//flag = 0 will stop and disconnect, != 0 send acceleration
+    //qDebug("tamaño: %llu  info: %u", size2d, flag2d);//DEBUG
+    sizeAccel = 0;//to allow reading next message size
+
+    if( !flagAccel ){
+        skt_accel->disconnectFromHost();
+        qDebug("Cliente ordena desconectar accel");
+        return;
+    }//--------------- only goes ahead if all data received & flag2d != 0
+
+//----------------------------------------------------------------create & send 2d vector
+    QByteArray buff;
+    QDataStream out(&buff, QIODevice::WriteOnly);
+    out.setVersion(QDataStream::Qt_5_0);
+
+    //qDebug("  tamaño vector = %lu",(*structBuffers.ptrP2Buf).size());
+
+    out << qint64(0);//let space for size info
+    out << (double) (*structBuffers.ptrAccel).accel_x;
+    out << (double) (*structBuffers.ptrAccel).accel_y;
+    out << (double) (*structBuffers.ptrAccel).accel_z;
+    out.device()->seek(0);//pointer to buff start
+    out << quint64(buff.size() - sizeof(quint64));//write buff size at beginning
+    //qDebug("  tamaño antes enviado: %lu",(buff.size()-sizeof(quint64))) ;//DEBUG
+    //qDebug("  tamaño vector = %lu",sizeof(*structBuffers.ptrAccel));
+    skt_accel->write(buff);//enviamos
 }

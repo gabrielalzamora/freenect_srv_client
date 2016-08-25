@@ -88,6 +88,7 @@ private:
     QTcpServer *s_accel;
     QTcpSocket *skt_accel;
     quint64 sizeAccel;
+    quint8 flagAccel;
 };
 
 #endif // ATTENDCLIENT_H

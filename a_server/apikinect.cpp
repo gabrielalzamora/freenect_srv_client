@@ -175,7 +175,7 @@ void Apikinect::getAll(pBuf *structBuffers, srvKinect *aSrvKinect)
                 uint32_t distance = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
 
                 //within Barrido limits
-                if( (distance < aSrvKinect->m_iBarridoEcu) && (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
+                if( (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
                     if( (*structBuffers->ptrBarridoBuf)[index]==0 || (*structBuffers->ptrBarridoBuf)[index]>distance )
                         (*structBuffers->ptrBarridoBuf)[index]=distance;
                 }
@@ -379,7 +379,7 @@ void Apikinect::getBarrido(pBuf *structBuffers, srvKinect *aSrvKinect)
                 uint32_t distance = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
 
                 //within Barrido limits
-                if( (distance < aSrvKinect->m_iBarridoEcu) && (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
+                if( (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
                     if( (*structBuffers->ptrBarridoBuf)[index]==0 || (*structBuffers->ptrBarridoBuf)[index]>distance )
                         (*structBuffers->ptrBarridoBuf)[index]=distance;
                 }
@@ -429,7 +429,7 @@ void Apikinect::get3dBarrido(pBuf *structBuffers, srvKinect *aSrvKinect)
                 uint32_t distance = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
 
                 //within Barrido limits
-                if( (distance < aSrvKinect->m_iBarridoEcu) && (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
+                if( (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
                     if( (*structBuffers->ptrBarridoBuf)[index]==0 || (*structBuffers->ptrBarridoBuf)[index]>distance )
                         (*structBuffers->ptrBarridoBuf)[index]=distance;
                 }
@@ -476,7 +476,7 @@ void Apikinect::get2dBarrido(pBuf *structBuffers, srvKinect *aSrvKinect)
                 uint32_t distance = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
 
                 //within Barrido limits
-                if( (distance < aSrvKinect->m_iBarridoEcu) && (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
+                if( (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
                     if( (*structBuffers->ptrBarridoBuf)[index]==0 || (*structBuffers->ptrBarridoBuf)[index]>distance )
                         (*structBuffers->ptrBarridoBuf)[index]=distance;
                 }

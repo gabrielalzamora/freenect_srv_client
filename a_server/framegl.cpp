@@ -140,7 +140,7 @@ void FrameGL::paintGL()
 
     drawAxis();
     drawCloud();
-    drawLines();
+    //drawLines();
 
     glPopMatrix();
 }
@@ -213,7 +213,7 @@ void FrameGL::drawCloud()
             }
         }
 
-        glColor3ub(255,0,0);
+        glColor3ub(0,255,0);
         if(pcloud_2d.size()>0){
             for(int i = 0; i < pcloud_2d.size(); i++){
                 glVertex3s(pcloud_2d[i].x,0,pcloud_2d[i].z);
@@ -240,6 +240,19 @@ void FrameGL::drawAxis()
         glColor3ub(0, 0, 255);  // Z-axis blue
         glVertex3f(0.0,0.0,0.0);
         glVertex3f(0.0,0.0,500.0);
+    glEnd();
+
+    glLineWidth(0.5f);
+    glBegin(GL_LINES);
+        for (int i=-11; i<12;i++)
+        {
+            glColor3ub(255, 0, 0);// X parallel
+            glVertex3f(-13000, 0.0, 1000*i);
+            glVertex3f( 13000, 0.0, 1000*i);
+            glColor3ub(0,0,255);// Z parallel
+            glVertex3f(1000*i, 0.0,-13000);
+            glVertex3f(1000*i, 0.0, 13000);
+        }
     glEnd();
 }
 /*!

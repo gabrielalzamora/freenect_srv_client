@@ -13,7 +13,7 @@
 #include "ui_mainwindow.h"
 #include "apikinect.h"
 
-#define SRVKPORT 10003
+//#define SRVKPORT 10003
 
 /*!
  * \class MainWindow
@@ -133,8 +133,7 @@ void MainWindow::barridoDataReady()
     ui->gvBarrido->show();
 }
 /*!
- * \brief MainWindow::barreInit
- * draw axes on sceneBarre to show on gvBarrido.
+ * \brief draw axes on sceneBarre to show on gvBarrido.
  */
 void MainWindow::barridoInit()
 {
@@ -144,7 +143,6 @@ void MainWindow::barridoInit()
     ejesPen.setWidth(2);
     QLine ejex = QLine(5,230,315,230);
     QLine ejey = QLine(160,230,160,5);
-    //falta pintar escala cada ~500mm
     sceneBarre->addLine(ejex,ejesPen);
     sceneBarre->addLine(ejey,ejesPen);
 }
