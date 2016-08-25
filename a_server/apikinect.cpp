@@ -343,11 +343,11 @@ void Apikinect::getBarrido(std::vector<uint32_t> &buffer)
     }
 }
 /*!
- * \brief distance to closer object function of angle you are looking at
+ * \brief get distance to closer object function of angle you are looking at
  *
- * Vector index tells angle you are pointing, vector content is
- * distance to closer object. 360 size vector with index 0 containing
- * distance to closest object angle 90º to the right from where
+ * Store in pBuf.ptrBarridoBuf a vector wich index tells angle you are pointing,
+ * vector content is distance to closer object. 360 size vector with index 0
+ * containing distance to closest object at angle 90º to the right from where
  * camara is pointing. Range from -89.5º to 90º each 1/2 degree (180*2=360 values)
  * \param [out] structBuffers points to struct holding buffers.
  * \param [in] aSrvKinect configuration data.
@@ -388,21 +388,152 @@ void Apikinect::getBarrido(pBuf *structBuffers, srvKinect *aSrvKinect)
     }
 }
 
+/*!
+ * \brief obtain 3d point cloud and barrido (swept).
+ * \param [out] structBuffers points to struct holding buffers.
+ * \param [in] aSrvKinect configuration data.
+ * \see getBarrido()
+ */
 void Apikinect::get3dBarrido(pBuf *structBuffers, srvKinect *aSrvKinect)
 {
+    point3c p3;//3D + color points cloud
+    RGBQ color;
+    structBuffers->ptrP3Buf->resize(0);//reset 3D points cloud
+    for(int i=0;i<360;i++) (*structBuffers->ptrBarridoBuf)[i]=0;//reset Barrido vector
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
 
+    for (int i = 0; i < 480*640; i+=aSrvKinect->m_usModulo3D)
+    {
+        // Convert from image plane coordinates to world coordinates
+        // Z into screen, Y downwards, X to right as OpenGL
+        // Z = depth*cos(angleKinect)-y*sin(angleKinect)  if angleKinect around x axis
+        p3.z = m_buffer_depth[i]*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0);
+
+        //within z limits
+        if( (p3.z != 0) && (p3.z <= aSrvKinect->m_fZMax) ){
+            // Y = (y - cy) * d / fy but remember angleKinect plus camera high
+            // Y = y*cos(angleKinect)+depth*sin(angleKinect)-CameraHigh if angleKinect around Ox axis
+            p3.y = ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) + m_buffer_depth[i]*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - aSrvKinect->m_fAltura*1000;
+
+            //within y limits
+            if( (p3.y >= (-1)*aSrvKinect->m_fYMax) && (p3.y <= (-1)*aSrvKinect->m_fYMin) ){//within y limits (remember Y downwards)
+                p3.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;// X = (x - cx) * d / fx
+                color.rgbRed = m_buffer_video[3*i+0];    // R
+                color.rgbGreen = m_buffer_video[3*i+1];  // G
+                color.rgbBlue = m_buffer_video[3*i+2];   // B
+                color.rgbReserved = 0;
+                p3.color = color;
+                structBuffers->ptrP3Buf->push_back(p3);//stored in MainWindow::p3Buf
+
+                int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
+                uint32_t distance = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
+
+                //within Barrido limits
+                if( (distance < aSrvKinect->m_iBarridoEcu) && (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
+                    if( (*structBuffers->ptrBarridoBuf)[index]==0 || (*structBuffers->ptrBarridoBuf)[index]>distance )
+                        (*structBuffers->ptrBarridoBuf)[index]=distance;
+                }
+            }
+        }
+    }
 }
-
+/*!
+ * \brief get 2d point cloud and Barrido (swept)
+ *
+ * Store them in pBuf.ptrP3Buf and pBuf.ptrBarridoBuf
+ * \param [out] structBuffers points to struct holding buffers.
+ * \param [in] aSrvKinect configuration data.
+ */
 void Apikinect::get2dBarrido(pBuf *structBuffers, srvKinect *aSrvKinect)
 {
+    point2 p2;//2 dimensions points cloud
+    point3c p3;//3D + color points cloud
+    structBuffers->ptrP2Buf->resize(0);//reset 2D points cloud
+    for(int i=0;i<360;i++) (*structBuffers->ptrBarridoBuf)[i]=0;//reset Barrido vector
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
 
+    for (int i = 0; i < 480*640; i+=aSrvKinect->m_usModulo3D)
+    {
+        // Convert from image plane coordinates to world coordinates
+        // Z into screen, Y downwards, X to right as OpenGL
+        // Z = depth*cos(angleKinect)-y*sin(angleKinect)  if angleKinect around x axis
+        p3.z = m_buffer_depth[i]*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0);
+
+        //within z limits
+        if( (p3.z != 0) && (p3.z <= aSrvKinect->m_fZMax) ){
+            // Y = (y - cy) * d / fy but remember angleKinect plus camera high
+            // Y = y*cos(angleKinect)+depth*sin(angleKinect)-CameraHigh if angleKinect around Ox axis
+            p3.y = ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) + m_buffer_depth[i]*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - aSrvKinect->m_fAltura*1000;
+
+            //within y limits
+            if( (p3.y >= (-1)*aSrvKinect->m_fYMax) && (p3.y <= (-1)*aSrvKinect->m_fYMin) ){//within y limits (remember Y downwards)
+                p2.z = p3.z;
+                p3.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;// X = (x - cx) * d / fx
+                p2.x = p3.x;
+                structBuffers->ptrP2Buf->push_back(p2);//stored in MainWindow::p2Buf
+
+                int index = 180-int(2*atan(double(p3.x)/double(p3.z))*180/M_PI);
+                uint32_t distance = uint32_t(sqrt( p3.x*p3.x + p3.z*p3.z ));//distance en mm
+
+                //within Barrido limits
+                if( (distance < aSrvKinect->m_iBarridoEcu) && (p3.y >= (-1)*aSrvKinect->m_iBarridoYMax) && (p3.y <= (-1)*aSrvKinect->m_iBarridoYMin) ){
+                    if( (*structBuffers->ptrBarridoBuf)[index]==0 || (*structBuffers->ptrBarridoBuf)[index]>distance )
+                        (*structBuffers->ptrBarridoBuf)[index]=distance;
+                }
+            }
+        }
+    }
 }
-
+/*!
+ * \brief get 3d and 2d point clouds
+ *
+ * Store them in pBuf.ptrP3Buf and pBuf.ptrP2Buf
+ * \param [out] structBuffers points to struct holding buffers.
+ * \param [in] aSrvKinect configuration data.
+ */
 void Apikinect::get2and3(pBuf *structBuffers, srvKinect *aSrvKinect)
 {
+    point2 p2;//2 dimensions points cloud
+    point3c p3;//3D + color points cloud
+    RGBQ color;
+    structBuffers->ptrP3Buf->resize(0);//reset 3D points cloud
+    structBuffers->ptrP2Buf->resize(0);//reset 2D points cloud
+    float f = 595.f;//intrinsec kinect camera parameter fx=fy=f
 
+    for (int i = 0; i < 480*640; i+=aSrvKinect->m_usModulo3D)
+    {
+        // Convert from image plane coordinates to world coordinates
+        // Z into screen, Y downwards, X to right as OpenGL
+        // Z = depth*cos(angleKinect)-y*sin(angleKinect)  if angleKinect around x axis
+        p3.z = m_buffer_depth[i]*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0);
+
+        //within z limits
+        if( (p3.z != 0) && (p3.z <= aSrvKinect->m_fZMax) ){
+            // Y = (y - cy) * d / fy but remember angleKinect plus camera high
+            // Y = y*cos(angleKinect)+depth*sin(angleKinect)-CameraHigh if angleKinect around Ox axis
+            p3.y = ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) + m_buffer_depth[i]*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - aSrvKinect->m_fAltura*1000;
+
+            //within y limits
+            if( (p3.y >= (-1)*aSrvKinect->m_fYMax) && (p3.y <= (-1)*aSrvKinect->m_fYMin) ){//within y limits (remember Y downwards)
+                p2.z = p3.z;
+                p3.x = (i%640-(640-1)/2.f)*m_buffer_depth[i]/f;// X = (x - cx) * d / fx
+                p2.x = p3.x;
+                color.rgbRed = m_buffer_video[3*i+0];    // R
+                color.rgbGreen = m_buffer_video[3*i+1];  // G
+                color.rgbBlue = m_buffer_video[3*i+2];   // B
+                color.rgbReserved = 0;
+                p3.color = color;
+                structBuffers->ptrP3Buf->push_back(p3);//stored in MainWindow::p3Buf
+                structBuffers->ptrP2Buf->push_back(p2);//stored in MainWindow::p2Buf
+            }
+        }
+    }
 }
 
+/*!
+ * \brief store acceleration  components in a, accel strut
+ * \param [out] a where acceleration components is saved
+ */
 void Apikinect::getAccel(accel &a)
 {
     freenect_update_tilt_state(myself);

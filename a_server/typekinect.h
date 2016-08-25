@@ -101,7 +101,7 @@ typedef struct pBuf{
     std::vector<point3c> *ptrP3Buf;//!< container of points cloud <- video+depth
     std::vector<point2> *ptrP2Buf;//!< container of 2D points = (point cloud) - color - z
     std::vector<uint32_t> *ptrBarridoBuf;//!< barridoBuf contains distance to closer object on angle (360-i)/2 degrees, xOz plane (horizontal to camera)
-    std::vector<double> *ptrAccel;//!< acceleration components x,y,z (y ~ 9,81 if m_iAnguloKinect=0)
+    accel *ptrAccel;//!< acceleration components x,y,z (y ~ 9,81 if m_iAnguloKinect=0)
 }pBuf;
 
 /*!

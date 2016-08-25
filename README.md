@@ -3,6 +3,7 @@ QT server connected to kinect will send 3d data to clients
 
 in progress...
 
+25 ago 2016 - acceleration in server, check box combinations allowed
 24 ago 2016 - all served if all selected, avoid other combinations
 24 ago 2016 - served 3d shown on client QGLWidget
 18 ago 2016 - serving video, depth & barrido (swept) reconnecting

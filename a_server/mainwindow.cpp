@@ -234,13 +234,13 @@ void MainWindow::init()
     p2Buf.reserve(300000);
     p2Buf.resize(0);
     barridoBuf.resize(360);
-    accel.resize(3);
+    a.accel_x = a.accel_y = a.accel_z = 0;
     structBuffers.ptrVideoBuf = &videoBuf;
     structBuffers.ptrDepthBuf = &depthBuf;
     structBuffers.ptrP3Buf = &p3Buf;
     structBuffers.ptrP2Buf = &p2Buf;
     structBuffers.ptrBarridoBuf = &barridoBuf;
-    structBuffers.ptrAccel = &accel;
+    structBuffers.ptrAccel = &a;
     ellipseVector.reserve(360);
     ellipseVector.resize(0);
     sceneVideo = new QGraphicsScene;
@@ -252,7 +252,7 @@ void MainWindow::init()
     ui->gvVideo->setScene(sceneVideo);
     ui->gvDepth->setScene(sceneDepth);
     ui->gvBarrido->setScene(sceneBarre);
-    timeVector.resize(6);
+    timeVector.resize(e_xtra);
     //server
     mainServer = new QTcpServer(this);
 }
@@ -353,38 +353,63 @@ void MainWindow::loop()
 
 //        qApp->processEvents();//stay responsive to button click
 
-        if( ui->tab_2->m_srvK.m_bEnvio3D && ui->tab_2->m_srvK.m_bEnvio2D && ui->tab_2->m_srvK.m_bEnvioBarrido){//all buffers
+        if( ui->tab_2->m_srvK.m_bEnvio2D && ui->tab_2->m_srvK.m_bEnvio3D && ui->tab_2->m_srvK.m_bEnvioBarrido){//all buffers
+            qDebug("  2D+3D+Barrido");
             t.start();//---------------------------------------------time.start
-            //device->getAll(p3Buf,barridoBuf);
             device->getAll(&structBuffers,&ui->tab_2->m_srvK);
             timeVector[e_3] = t.elapsed();//---------------------timeVector[e_3]
-
-            //paint 3d + 2d
+            ui->glWidget->setCloud(p2Buf);//send FrameGL new point cloud
             ui->glWidget->setCloud(p3Buf);
-            ui->glWidget->setCloud(p2Buf);
-            ui->glWidget->repaint();//paint points cloud on glwidget
-            timeVector.push_back(t.elapsed());//---------------------timeVector[3]
+            ui->glWidget->repaint();//paint points clouds on glwidget
+            barridoDataReady();//paint Barrido (swept)
+        }else if(!(ui->tab_2->m_srvK.m_bEnvio2D) && ui->tab_2->m_srvK.m_bEnvio3D && ui->tab_2->m_srvK.m_bEnvioBarrido){
+            qDebug("  3D+Barrido");
             t.start();//---------------------------------------------time.start
-            barridoDataReady();//paint Barrido (barre)
-            timeVector.push_back(t.elapsed());//---------------------timeVector[4]
-            qDebug("  3D+2D+barrido");
-        }else if(ui->tab_2->m_srvK.m_bEnvio3D && !(ui->tab_2->m_srvK.m_bEnvio2D) && ui->tab_2->m_srvK.m_bEnvioBarrido){
+            device->get3dBarrido(&structBuffers,&ui->tab_2->m_srvK);
+            timeVector[e_3] = t.elapsed();//---------------------timeVector[e_3]
+            ui->glWidget->setCloud(p3Buf);//send FrameGL new point cloud
+            ui->glWidget->repaint();//paint points cloud on glwidget
+            barridoDataReady();//paint Barrido (swept)
+
+        }else if(ui->tab_2->m_srvK.m_bEnvio2D && !(ui->tab_2->m_srvK.m_bEnvio3D) && ui->tab_2->m_srvK.m_bEnvioBarrido){
+            qDebug("  2D+Barrido");
+            t.start();//---------------------------------------------time.start
+            device->get2dBarrido(&structBuffers,&ui->tab_2->m_srvK);
+            timeVector[e_2] = t.elapsed();//---------------------timeVector[e_2]
+            ui->glWidget->setCloud(p2Buf);//send FrameGL new point cloud
+            ui->glWidget->repaint();//paint points cloud on glwidget
+            barridoDataReady();//paint Barrido (swept)
+        }else if(ui->tab_2->m_srvK.m_bEnvio2D && ui->tab_2->m_srvK.m_bEnvio3D && !(ui->tab_2->m_srvK.m_bEnvioBarrido)){
+            qDebug("  2D+3D");
+            t.start();//---------------------------------------------time.start
+            device->get2and3(&structBuffers,&ui->tab_2->m_srvK);
+            timeVector[e_3] = t.elapsed();//---------------------timeVector[e_3]
+            ui->glWidget->setCloud(p2Buf);//send FrameGL new point cloud
+            ui->glWidget->setCloud(p3Buf);//send FrameGL new point cloud
+            ui->glWidget->repaint();//paint points cloud on glwidget
+        }else if(ui->tab_2->m_srvK.m_bEnvio3D){
+            qDebug("  3D");
             t.start();//---------------------------------------------time.start
             device->get3d(&structBuffers,&ui->tab_2->m_srvK);
-            timeVector.push_back(t.elapsed());//---------------------timeVector[2]
-
-            device->getBarrido(barridoBuf);
-            timeVector.push_back(t.elapsed());//---------------------timeVector[5]
-            barridoDataReady();//paint Barrido (barre)
-            qDebug("  3D+barrido");
+            timeVector[e_3] = t.elapsed();//---------------------timeVector[e_3]
+            ui->glWidget->setCloud(p3Buf);//send FrameGL new point cloud
+            ui->glWidget->repaint();//paint points cloud on glwidget
         }else if(ui->tab_2->m_srvK.m_bEnvio2D){
+            qDebug("  2D");
             t.start();//---------------------------------------------time.start
-            device->get2(p2Buf);//to control 2D calc
-            timeVector.push_back(t.elapsed());//---------------------timeVector[6]
-            qDebug("NO DEBERÍA ESTAR EN SOLO 2D");
+            device->get2(&structBuffers,&ui->tab_2->m_srvK);
+            timeVector[e_2] = t.elapsed();//---------------------timeVector[e_3]
+            ui->glWidget->setCloud(p2Buf);//send FrameGL new point cloud
+            ui->glWidget->repaint();//paint points cloud on glwidget
+        }else if(ui->tab_2->m_srvK.m_bEnvioBarrido){
+            qDebug("  Barrido");
+            t.start();//---------------------------------------------time.start
+            device->getBarrido(&structBuffers,&ui->tab_2->m_srvK);
+            timeVector[e_barrido] = t.elapsed();//---------------------timeVector[e_barrido]
+            barridoDataReady();//paint Barrido (swept)
         }
-
-        //printTimeVector(timeVector);
+        device->getAccel(a);
+        printTimeVector(timeVector);
 //------------------------------------------pinta aceleraciones---------------
         qApp->processEvents();//stay responsive to button click
     }
@@ -404,25 +429,37 @@ void MainWindow::printTimeVector(std::vector<int> &timeV)
 {
     QString str,aux;
     str = "get video = ";
-    aux.setNum(timeV[0]);
+    aux.setNum(timeVector[e_video]);
     str.append(aux);
     aux = " \nget depth = ";
     str.append(aux);
-    aux.setNum(timeV[1]);
+    aux.setNum(timeVector[e_depth]);
     str.append(aux);
-    aux = " \nget buffer = ";
+    aux = " \nget 3D = ";
     str.append(aux);
-    aux.setNum(timeV[2]);
+    aux.setNum(timeVector[e_3]);
     str.append(aux);
-    aux = "\npinta3D = ";
+    aux = "\nget 2D = ";
     str.append(aux);
-    aux.setNum(timeV[3]);
+    aux.setNum(timeV[e_2]);
     str.append(aux);
-    aux = "\npintaB = ";
+    aux = "\nget Barrido = ";
     str.append(aux);
-    aux.setNum(timeV[4]);
+    aux.setNum(timeV[e_barrido]);
     str.append(aux);
     //pinta las aceleraciones----------------------
+    aux = "\n  accel X = ";
+    str.append(aux);
+    aux.setNum(a.accel_x);
+    str.append(aux);
+    aux = "\n  accel Y = ";
+    str.append(aux);
+    aux.setNum(a.accel_y);
+    str.append(aux);
+    aux = "\n  accel Z = ";
+    str.append(aux);
+    aux.setNum(a.accel_z);
+    str.append(aux);
     ui->textEdit->setText(str);
 }
 
