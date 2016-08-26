@@ -41,13 +41,19 @@ private slots:
     void depthRefresh();
     void depthSend();
     //3d
+    void connection3D();
     void incoming3D();
+    void refresh3D();
     void send3D();
     //2d
+    void connection2D();
     void incoming2D();
+    void refresh2D();
     void send2D();
     //barrido
+    void connectionBarrido();
     void incomingBarrido();
+    void refreshBarrido();
     void sendBarrido();
     //accel
     void incomingAccel();

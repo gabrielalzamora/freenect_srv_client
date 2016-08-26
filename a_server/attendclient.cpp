@@ -120,11 +120,11 @@ void AttendClient::startServers()
     s_depth->listen(QHostAddress::Any,DEPTHPORT);
     connect(s_depth,SIGNAL(newConnection()),this,SLOT(depthConnection()));
     s_3d->listen(QHostAddress::Any,THREEPORT);
-    connect(s_3d,SIGNAL(newConnection()),this,SLOT(incoming3D()));
+    connect(s_3d,SIGNAL(newConnection()),this,SLOT(connection3D()));
     s_2d->listen(QHostAddress::Any,TWOPORT);
-    connect(s_2d,SIGNAL(newConnection()),this,SLOT(incoming2D()));
+    connect(s_2d,SIGNAL(newConnection()),this,SLOT(connection2D()));
     s_barrido->listen(QHostAddress::Any,BARRIDOPORT);
-    connect(s_barrido,SIGNAL(newConnection()),this,SLOT(incomingBarrido()));
+    connect(s_barrido,SIGNAL(newConnection()),this,SLOT(connectionBarrido()));
     s_accel->listen(QHostAddress::Any,ACCELPORT);
     connect(s_accel,SIGNAL(newConnection()),this,SLOT(incomingAccel()));
 
@@ -135,7 +135,7 @@ void AttendClient::startServers()
  */
 void AttendClient::readSrvKdata()
 {
-    qDebug("AttendClient::readSrvKdata");
+    //qDebug("AttendClient::readSrvKdata");
     //-------------------------------------------------------read client msg
     QDataStream in(m_socket);//read client petition
     in.setVersion(QDataStream::Qt_5_0);
@@ -150,7 +150,7 @@ void AttendClient::readSrvKdata()
     }
 
     in >> flagSrvK;//flag = 0 will stop and disconnect, != 0 read srvK
-    qDebug("tamaño: %llu  info: %u", sizeSrvK, flagSrvK);//DEBUG
+    //qDebug("tamaño: %llu  info: %u", sizeSrvK, flagSrvK);//DEBUG
     if( !flagSrvK ){
         m_socket->disconnectFromHost();
         qDebug("Cliente ordena desconectar");
@@ -184,7 +184,7 @@ void AttendClient::readSrvKdata()
 }
 
 /*!
- * \brief answer incoming connection; bind to a socket in order to I/O data
+ * \brief answer incoming connection; bind to a socket in order to I/O video data
  */
 void AttendClient::videoConnection()
 {
@@ -198,7 +198,7 @@ void AttendClient::videoConnection()
  */
 void AttendClient::videoIncoming()
 {
-    qDebug("AttendClient::videoIncoming");
+    //qDebug("AttendClient::videoIncoming");
     if(skt_video->peerAddress() != peerAddr)
         return;//if client is not our client wait for next connection
     //-------------------------------------------------------read client msg
@@ -261,11 +261,11 @@ void AttendClient::videoSend()
 }
 
 /*!
- * \brief answer incoming connection; bind to a socket in order to I/O data
+ * \brief answer incoming connection; bind to a socket in order to I/O depth data
  */
 void AttendClient::depthConnection()
 {
-    qDebug("AttendClient::depthConnection");
+    //qDebug("AttendClient::depthConnection");
     skt_depth = s_depth->nextPendingConnection();
     connect(skt_depth,SIGNAL(readyRead()),this,SLOT(depthIncoming()));
     t_depth.start();//to have first time reference
@@ -275,7 +275,7 @@ void AttendClient::depthConnection()
  */
 void AttendClient::depthIncoming()
 {
-    qDebug("AttendClient::depthIncoming");
+    //qDebug("AttendClient::depthIncoming");
     if(skt_depth->peerAddress() != peerAddr)
         return;//if client is not our client wait for next connection
     //-------------------------------------------------------read client msg
@@ -305,18 +305,18 @@ void AttendClient::depthIncoming()
  */
 void AttendClient::depthRefresh()
 {
-    qDebug("AttendClient::depthRefresh");
+    //qDebug("AttendClient::depthRefresh");
     int duration = srvK.m_ulRefrescoDepth - t_depth.elapsed();
-    qDebug("  antes de retraso %i",t_depth.elapsed());
+    //qDebug("  antes de retraso %i",t_depth.elapsed());
 
     if( duration > 0 ){
-        qDebug("  CON retraso duracion= %i",duration);
+        //qDebug("  CON retraso duracion= %i",duration);
         QTimer::singleShot(duration,this,SLOT(depthSend()));
-        qDebug("  En retraso tiempoooo  %i",t_depth.elapsed());
+        //qDebug("  En retraso tiempoooo  %i",t_depth.elapsed());
     }else{
-        qDebug("  enviamos SIN retraso %i",t_depth.elapsed());
+        //qDebug("  enviamos SIN retraso %i",t_depth.elapsed());
         depthSend();//enviamos
-        qDebug("  YA enviado %i",t_depth.elapsed());
+        //qDebug("  YA enviado %i",t_depth.elapsed());
     }
 }
 /*!
@@ -347,12 +347,63 @@ void AttendClient::depthSend()
 }
 
 /*!
- * \brief answer incoming connection; bind to a socket in order to I/O data
+ * \brief answer incoming connection; bind to a socket in order to I/O  3d data
+ */
+void AttendClient::connection3D()
+{
+    //qDebug("AttendClient::connection3D");
+    skt_3d = s_3d->nextPendingConnection();
+    connect(skt_3d,SIGNAL(readyRead()),this,SLOT(incoming3D()));
+    t_3d.start();
+}
+/*!
+ * \brief read client incomming message and call refresh3D()
  */
 void AttendClient::incoming3D()
 {
-    skt_3d = s_3d->nextPendingConnection();
-    connect(skt_3d,SIGNAL(readyRead()),this,SLOT(send3D()));
+    //qDebug("AttendClient::incoming3D");
+    if(skt_3d->peerAddress() != peerAddr)
+        return;//if client is not our client wait for next connection
+    //-------------------------------------------------------read client msg
+    QDataStream in(skt_3d);
+    in.setVersion(QDataStream::Qt_5_0);
+    if (size3d == 0) {//check there's enough bytes to read
+        if (skt_3d->bytesAvailable() < sizeof(quint64))
+            return;
+        in >> size3d;//read and save into quint64 size3d
+    }
+    if (skt_3d->bytesAvailable() < size3d){//check there's enough bytes to read
+        return;//if not wait till you have all data size3d says
+    }
+    in >> flag3d;//read flag = 0 will stop and disconnect, != 0 send point cloud
+    //qDebug("tamaño: %llu  info: %u", size3d, flag3d);//DEBUG
+    size3d = 0;//to allow reading next message size
+
+    if( !flag3d ){
+        skt_3d->disconnectFromHost();
+        //qDebug("Cliente ordena desconectar 3d");
+        return;
+    }//--------------- only goes ahead if all data received & flag3d != 0
+    refresh3D();
+}
+/*!
+ * \brief control time between sended 3d images (refresco)
+ */
+void AttendClient::refresh3D()
+{
+    //qDebug("AttendClient::refresh3D");
+    int duration = srvK.m_ulRefresco3D - t_3d.elapsed();
+    //qDebug("  antes de retraso %i",t_3d.elapsed());
+
+    if( duration > 0 ){
+        //qDebug("  CON retraso duracion= %i",duration);
+        QTimer::singleShot(duration,this,SLOT(send3D()));
+        //qDebug("  En retraso tiempoooo  %i",t_3d.elapsed());
+    }else{
+        //qDebug("  enviamos SIN retraso %i",t_3d.elapsed());
+        send3D();//enviamos
+        //qDebug("  YA enviado %i",t_3d.elapsed());
+    }
 }
 /*!
  * \brief send 3D point cloud through skt_3d to client
@@ -360,39 +411,9 @@ void AttendClient::incoming3D()
 void AttendClient::send3D()
 {
     //qDebug("AttendClient::send3D");
-    if(skt_3d->peerAddress() != peerAddr){//AttendClient only attend single client
-        //qDebug("  otro cliente :o(  %u yo %u ",skt_3d->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
-        return;//if client is not our client wait for next connection
-    }
-
-    //-------------------------------------------------------read client msg
-    QDataStream in(skt_3d);//read client petition
-    in.setVersion(QDataStream::Qt_5_0);
-
-    if (size3d == 0) {//check there's enough bytes to read
-        if (skt_3d->bytesAvailable() < sizeof(quint64))
-            return;
-        in >> size3d;//read and save into quint64 size3d
-    }
-    if (skt_3d->bytesAvailable() < size3d){//check there's enough bytes to read
-        return;//if not wait till you have all data size 3D says
-    }
-
-    in >> flag3d;//flag = 0 will stop and disconnect, != 0 send point cloud
-    //qDebug("tamaño: %llu  info: %u", size3d, flag3d);//DEBUG
-    size3d = 0;//to allow reading next message size
-
-    if( !flag3d ){
-        skt_3d->disconnectFromHost();
-        qDebug("Cliente ordena desconectar 3d");
-        return;
-    }//--------------- only goes ahead if all data received & flag3d != 0
-
-//----------------------------------------------------------------create & send 3d vector
     QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
-
     //qDebug("  tamaño vector = %lu",(*structBuffers.ptrP3Buf).size());
 
     out << qint64(0);//let space for size info
@@ -411,15 +432,67 @@ void AttendClient::send3D()
     //qDebug("  tamaño antes enviado: %lu",(buff.size()-sizeof(quint64))) ;//DEBUG
     //qDebug("  tamaño vector = %lu",(*structBuffers.ptrP3Buf).size());
     skt_3d->write(buff);//enviamos
+    t_3d.restart();
 }
 
 /*!
- * \brief answer answer incoming connection; bind to a socket in order to I/O data
+ * \brief answer incoming connection; bind to a socket in order to I/O 2d data
+ */
+void AttendClient::connection2D()
+{
+    //qDebug("AttendClient::connection2D");
+    skt_2d = s_2d->nextPendingConnection();
+    connect(skt_2d,SIGNAL(readyRead()),this,SLOT(incoming2D()));
+    t_2d.start();
+}
+/*!
+ * \brief read client incomming message and call refresh2D()
  */
 void AttendClient::incoming2D()
 {
-    skt_2d = s_2d->nextPendingConnection();
-    connect(skt_2d,SIGNAL(readyRead()),this,SLOT(send2D()));
+    //qDebug("AttendClient::incoming2D");
+    if(skt_2d->peerAddress() != peerAddr)
+        return;//if client is not our client wait for next connection
+
+    QDataStream in(skt_2d);
+    in.setVersion(QDataStream::Qt_5_0);
+    if (size2d == 0) {//check there's enough bytes to read
+        if (skt_2d->bytesAvailable() < sizeof(quint64))
+            return;
+        in >> size2d;//read and save into quint64 size2d
+    }
+    if (skt_2d->bytesAvailable() < size2d){//check there's enough bytes to read
+        return;//if not wait till you have all data size2d says
+    }
+    in >> flag2d;//read flag = 0 will stop and disconnect, != 0 send point cloud
+    //qDebug("tamaño: %llu  info: %u", size2d, flag2d);//DEBUG
+    size2d = 0;//to allow reading next message size
+
+    if( !flag2d ){
+        skt_2d->disconnectFromHost();
+        //qDebug("Cliente ordena desconectar 2d");
+        return;
+    }//--------------- only goes ahead if all data received & flag2d != 0
+    refresh2D();
+}
+/*!
+ * \brief control time between sended 2d images (refresco)
+ */
+void AttendClient::refresh2D()
+{
+    //qDebug("AttendClient::refresh2D");
+    int duration = srvK.m_ulRefresco3D - t_2d.elapsed();
+    //qDebug("  antes de retraso %i",t_2d.elapsed());
+
+    if( duration > 0 ){
+        //qDebug("  CON retraso duracion= %i",duration);
+        QTimer::singleShot(duration,this,SLOT(send2D()));
+        //qDebug("  En retraso tiempoooo  %i",t_2d.elapsed());
+    }else{
+        //qDebug("  enviamos SIN retraso %i",t_2d.elapsed());
+        send2D();//enviamos
+        //qDebug("  YA enviado %i",t_2d.elapsed());
+    }
 }
 /*!
  * \brief send 2D point cloud through skt_2d to client
@@ -427,40 +500,9 @@ void AttendClient::incoming2D()
 void AttendClient::send2D()
 {
     //qDebug("AttendClient::send2D");
-    if(skt_2d->peerAddress() != peerAddr){//AttendClient only attend single client
-        //qDebug("  otro cliente :o(  %u yo %u ",skt_2d->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
-        return;//if client is not our client wait for next connection
-    }
-
-    //-------------------------------------------------------read client msg
-    QDataStream in(skt_2d);//read client petition
-    in.setVersion(QDataStream::Qt_5_0);
-
-    if (size2d == 0) {//check there's enough bytes to read
-        if (skt_2d->bytesAvailable() < sizeof(quint64))
-            return;
-        in >> size2d;//read and save into quint64 size2d
-    }
-    if (skt_2d->bytesAvailable() < size2d){//check there's enough bytes to read
-        return;//if not wait till you have all data size 2D says
-    }
-
-    in >> flag2d;//flag = 0 will stop and disconnect, != 0 send point cloud
-    //qDebug("tamaño: %llu  info: %u", size2d, flag2d);//DEBUG
-    size2d = 0;//to allow reading next message size
-
-    if( !flag2d ){
-        skt_2d->disconnectFromHost();
-        qDebug("Cliente ordena desconectar 2d");
-        return;
-    }//--------------- only goes ahead if all data received & flag2d != 0
-
-//----------------------------------------------------------------create & send 2d vector
     QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
-
-    //qDebug("  tamaño vector = %lu",(*structBuffers.ptrP2Buf).size());
 
     out << qint64(0);//let space for size info
 
@@ -473,32 +515,30 @@ void AttendClient::send2D()
     //qDebug("  tamaño antes enviado: %lu",(buff.size()-sizeof(quint64))) ;//DEBUG
     //qDebug("  tamaño vector = %lu",(*structBuffers.ptrP2Buf).size());
     skt_2d->write(buff);//enviamos
+    t_2d.restart();
 }
 
 /*!
- * \brief answer incoming connection; bind to a socket in order to I/O data
+ * \brief answer incoming connection; bind to a socket in order to I/O barrido data
+ */
+void AttendClient::connectionBarrido()
+{
+    //qDebug("AttendClient::connectionBarrido");
+    skt_barrido = s_barrido->nextPendingConnection();
+    connect(skt_barrido,SIGNAL(readyRead()),this,SLOT(incomingBarrido()));
+    t_barrido.start();
+}
+/*!
+ * \brief read client incomming message and call refreshBarrido()
  */
 void AttendClient::incomingBarrido()
 {
-    skt_barrido = s_barrido->nextPendingConnection();
-    connect(skt_barrido,SIGNAL(readyRead()),this,SLOT(sendBarrido()));
-}
-/*!
- * \brief send barrido (vector) through skt_barrido to client
- */
-void AttendClient::sendBarrido()
-{
-    //qDebug("AttendClient::sendBarrido");
+    //qDebug("AttendClient::incomingBarrido");
+    if(skt_barrido->peerAddress() != peerAddr)
+        return;
 
-    if(skt_barrido->peerAddress() != peerAddr){//AttendClient only attend single client
-        //qDebug("  otro cliente :o(  %u yo %u ",skt_barrido->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
-        return;//if client is not our client wait for next connection
-    }
-
-    //-------------------------------------------------------read client msg
     QDataStream in(skt_barrido);//read client petition
     in.setVersion(QDataStream::Qt_5_0);
-
     if (sizeBarrido == 0) {//check there's enough bytes to read
         if (skt_barrido->bytesAvailable() < sizeof(quint64))
             return;
@@ -507,18 +547,42 @@ void AttendClient::sendBarrido()
     if (skt_barrido->bytesAvailable() < sizeBarrido){//check there's enough bytes to read
         return;//if not wait till you have all data sizeBarrido says
     }
-
     in >> flagBarrido;//flag = 0 will stop and disconnect, != 0 send barrido
     //qDebug("tamaño: %llu  info: %u", sizeBarrido, flagBarrido);//DEBUG
     sizeBarrido = 0;//to allow reading next message size
 
     if( !flagBarrido ){
         skt_barrido->disconnectFromHost();
-        qDebug("Cliente ordena desconectar Barrido");
+        //qDebug("Cliente ordena desconectar Barrido");
         return;
     }//--------------- only goes ahead if all data received & flagDepth != 0
+    refreshBarrido();
+}
+/*!
+ * \brief control time between sended barrido vector (refresco)
+ */
+void AttendClient::refreshBarrido()
+{
+    //qDebug("AttendClient::refreshBarrido");
+    int duration = srvK.m_ulRefresco3D - t_barrido.elapsed();
+    //qDebug("  antes de retraso %i",t_barrido.elapsed());
 
-//----------------------------------------------------------------create & send depth frame as QImage
+    if( duration > 0 ){
+        //qDebug("  CON retraso duracion= %i",duration);
+        QTimer::singleShot(duration,this,SLOT(sendBarrido()));
+        //qDebug("  En retraso tiempoooo  %i",t_2d.elapsed());
+    }else{
+        //qDebug("  enviamos SIN retraso %i",t_2d.elapsed());
+        sendBarrido();//enviamos
+        //qDebug("  YA enviado %i",t_2d.elapsed());
+    }
+}
+/*!
+ * \brief send barrido (vector) through skt_barrido to client
+ */
+void AttendClient::sendBarrido()
+{
+    //qDebug("AttendClient::sendBarrido");
     QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
@@ -531,6 +595,7 @@ void AttendClient::sendBarrido()
     out << quint64(buff.size() - sizeof(quint64));//set buff size at beginning
     //qDebug("  tamaño antes enviado: %lu",(buff.size() - sizeof(quint64))) ;//DEBUG
     skt_barrido->write(buff);//send to client
+    t_barrido.restart();
 }
 
 /*!

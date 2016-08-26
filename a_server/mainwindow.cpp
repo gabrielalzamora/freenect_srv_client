@@ -58,10 +58,12 @@ MainWindow::MainWindow(QWidget *parent) :
  */
 MainWindow::~MainWindow()
 {
+    qDebug("MainWindow::~MainWindow()");
     if(currentDeviceIndex !=-1){
         stoploop();
         stopK(currentDeviceIndex);
     }
+    freenect.~Freenect();
     delete sceneVideo;
     delete sceneDepth;
     delete sceneBarre;
@@ -80,7 +82,8 @@ void MainWindow::videoDataReady()
 {
     if( imgVideo != NULL ) delete imgVideo;
     imgVideo = new QImage(videoBuf.data(),640,480,QImage::Format_RGB888);
-    sceneVideo->addPixmap(QPixmap::fromImage(*imgVideo).scaled(320,240,Qt::KeepAspectRatio));
+    sceneVideo->addPixmap(QPixmap::fromImage(*imgVideo).scaled(ui->gvVideo->width()-2,ui->gvVideo->height()-2,Qt::KeepAspectRatio));
+    //sceneVideo->addPixmap(QPixmap::fromImage(*imgVideo).scaled(320,240,Qt::KeepAspectRatio));
     ui->gvVideo->show();
 }
 /*!
@@ -102,7 +105,8 @@ void MainWindow::depthDataReady()
             imgDepth->setPixel(x,y,qRgb(r,g,b));// data to fit in 8 bits
         }
     }
-    sceneDepth->addPixmap(QPixmap::fromImage(*imgDepth).scaled(320,240,Qt::KeepAspectRatio));
+    sceneDepth->addPixmap(QPixmap::fromImage(*imgDepth).scaled(ui->gvDepth->width()-2,ui->gvDepth->height()-2,Qt::KeepAspectRatio));
+    //sceneDepth->addPixmap(QPixmap::fromImage(*imgDepth).scaled(320,240,Qt::KeepAspectRatio));
     ui->gvDepth->show();
 }
 /*!
@@ -540,6 +544,7 @@ void MainWindow::attendNewClient()///------test with concurrent clients---------
  */
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    this->~MainWindow();
-    exit(0);
+    qDebug("MainWindow::closeEvent()");
+
+    //exit(0);
 }

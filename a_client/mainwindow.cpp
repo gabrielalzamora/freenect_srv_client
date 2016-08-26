@@ -307,7 +307,8 @@ void MainWindow::readDataVideo()
     ioStream >> image;
 
     //-----------------------------------show image
-    sceneVideo->addPixmap(QPixmap::fromImage(image).scaled(320,240,Qt::KeepAspectRatio));
+    sceneVideo->addPixmap(QPixmap::fromImage(image).scaled(ui->gvDepth->width()-2,ui->gvDepth->height()-2,Qt::KeepAspectRatio));
+    //sceneVideo->addPixmap(QPixmap::fromImage(image).scaled(320,240,Qt::KeepAspectRatio));
     ui->gvVideo->show();
 
     sizeVideo = 0;//to allow get next img sizeVideo
@@ -391,7 +392,8 @@ void MainWindow::readDataDepth()
     ioStream >> image;
 
     //-----------------------------------show depth
-    sceneDepth->addPixmap(QPixmap::fromImage(image).scaled(320,240,Qt::KeepAspectRatio));
+    sceneDepth->addPixmap(QPixmap::fromImage(image).scaled(ui->gvDepth->width()-2,ui->gvDepth->height()-2,Qt::KeepAspectRatio));
+    //sceneDepth->addPixmap(QPixmap::fromImage(image).scaled(320,240,Qt::KeepAspectRatio));
     ui->gvDepth->show();
 
     //---------------------------request next image to server

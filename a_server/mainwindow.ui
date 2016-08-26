@@ -260,13 +260,27 @@
          </widget>
         </item>
         <item row="0" column="0">
-         <widget class="QGraphicsView" name="gvDepth"/>
+         <widget class="QGraphicsView" name="gvDepth">
+          <property name="verticalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+          <property name="horizontalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+         </widget>
         </item>
         <item row="1" column="0">
          <widget class="QGraphicsView" name="gvBarrido"/>
         </item>
         <item row="0" column="1">
-         <widget class="QGraphicsView" name="gvVideo"/>
+         <widget class="QGraphicsView" name="gvVideo">
+          <property name="verticalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+          <property name="horizontalScrollBarPolicy">
+           <enum>Qt::ScrollBarAlwaysOff</enum>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
