@@ -118,7 +118,7 @@ void AttendClient::startServers()
     s_video->listen(QHostAddress::Any,VIDEOPORT);
     connect(s_video,SIGNAL(newConnection()),this,SLOT(videoConnection()));
     s_depth->listen(QHostAddress::Any,DEPTHPORT);
-    connect(s_depth,SIGNAL(newConnection()),this,SLOT(incomingDepth()));
+    connect(s_depth,SIGNAL(newConnection()),this,SLOT(depthConnection()));
     s_3d->listen(QHostAddress::Any,THREEPORT);
     connect(s_3d,SIGNAL(newConnection()),this,SLOT(incoming3D()));
     s_2d->listen(QHostAddress::Any,TWOPORT);
@@ -188,11 +188,14 @@ void AttendClient::readSrvKdata()
  */
 void AttendClient::videoConnection()
 {
+    //qDebug("AttendClient::videoConnection");
     skt_video = s_video->nextPendingConnection();
-    connect(skt_video,SIGNAL(readyRead()),this,SLOT(videoRefresh()));
+    connect(skt_video,SIGNAL(readyRead()),this,SLOT(videoIncoming()));
     t_video.start();
 }
-
+/*!
+ * \brief read client incomming message and call videoRefresh()
+ */
 void AttendClient::videoIncoming()
 {
     qDebug("AttendClient::videoIncoming");
@@ -207,7 +210,7 @@ void AttendClient::videoIncoming()
         in >> sizeVideo;//read and save into quint64 sizeVideo
     }
     if (skt_video->bytesAvailable() < sizeVideo){//check there's enough bytes to read
-        return;//if not wait till you have all data size video says
+        return;//if not wait till you have all data sizeVideo says
     }
     in >> flagVideo;//read flag = 0 will stop and disconnect, != 0 send image
     //qDebug("tamaño: %llu  info: %u", sizeVideo, flagVideo);//DEBUG
@@ -215,26 +218,28 @@ void AttendClient::videoIncoming()
 
     if( !flagVideo ){
         skt_video->disconnectFromHost();
-        //qDebug("Cliente ordena desconectar VIDEO");
+        //qDebug("Cliente ordena desconectar video");
         return;
     }//--------------- only goes ahead if all data received & flagVideo != 0
     videoRefresh();
 }
-
+/*!
+ * \brief control time between sended video images (refresco)
+ */
 void AttendClient::videoRefresh()
 {
-    qDebug("AttendClient::videoRefresh");
+    //qDebug("AttendClient::videoRefresh");
     int duration = srvK.m_ulRefrescoColor - t_video.elapsed();
-    qDebug("  antes de retraso %i",t_video.elapsed());
+    //qDebug("  antes de retraso %i",t_video.elapsed());
 
     if( duration > 0 ){
-        qDebug("  CON retraso duracion= %i",duration);
+        //qDebug("  CON retraso duracion= %i",duration);
         QTimer::singleShot(duration,this,SLOT(videoSend()));
-        qDebug("  En retraso tiempoooo  %i",t_video.elapsed());
+        //qDebug("  En retraso tiempoooo  %i",t_video.elapsed());
     }else{
-        qDebug("  enviamos SIN retraso %i",t_video.elapsed());
+        //qDebug("  enviamos SIN retraso %i",t_video.elapsed());
         videoSend();//enviamos
-        qDebug("  YA enviado %i",t_video.elapsed());
+        //qDebug("  YA enviado %i",t_video.elapsed());
     }
 }
 /*!
@@ -242,7 +247,7 @@ void AttendClient::videoRefresh()
  */
 void AttendClient::videoSend()
 {
-    qDebug("AttendClient::videoSend");
+    //qDebug("AttendClient::videoSend");
     QImage image = QImage(structBuffers.ptrVideoBuf->data(),640,480,QImage::Format_RGB888);
     QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
@@ -258,46 +263,68 @@ void AttendClient::videoSend()
 /*!
  * \brief answer incoming connection; bind to a socket in order to I/O data
  */
-void AttendClient::incomingDepth()
+void AttendClient::depthConnection()
 {
+    qDebug("AttendClient::depthConnection");
     skt_depth = s_depth->nextPendingConnection();
-    connect(skt_depth,SIGNAL(readyRead()),this,SLOT(sendDepth()));
+    connect(skt_depth,SIGNAL(readyRead()),this,SLOT(depthIncoming()));
+    t_depth.start();//to have first time reference
 }
 /*!
- * \brief send depth frame (image) through skt_depth to client
+ * \brief read client incomming message and call depthRefresh()
  */
-void AttendClient::sendDepth()
+void AttendClient::depthIncoming()
 {
-    //qDebug("AttendClient::sendDepth");
-    if(skt_depth->peerAddress() != peerAddr){//AttendClient only attend single client
-        qDebug("  otro cliente :o(  %u yo %u ",skt_depth->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+    qDebug("AttendClient::depthIncoming");
+    if(skt_depth->peerAddress() != peerAddr)
         return;//if client is not our client wait for next connection
-    }
-
     //-------------------------------------------------------read client msg
-    QDataStream in(skt_depth);//read client petition
+    QDataStream in(skt_depth);
     in.setVersion(QDataStream::Qt_5_0);
-
     if (sizeDepth == 0) {//check there's enough bytes to read
         if (skt_depth->bytesAvailable() < sizeof(quint64))
             return;
         in >> sizeDepth;//read and save into quint64 sizeDepth
     }
     if (skt_depth->bytesAvailable() < sizeDepth){//check there's enough bytes to read
-        return;//if not wait till you have all data size video says
+        return;//if not wait till you have all data sizeDepth says
     }
-
-    in >> flagDepth;//flag = 0 will stop and disconnect, != 0 send image
+    in >> flagDepth;//read flag = 0 will stop and disconnect, != 0 send image
     //qDebug("tamaño: %llu  info: %u", sizeDepth, flagDepth);//DEBUG
     sizeDepth = 0;//to allow reading next message size
 
     if( !flagDepth ){
         skt_depth->disconnectFromHost();
-        //qDebug("Cliente ordena desconectar Depth");
+        //qDebug("Cliente ordena desconectar depth");
         return;
     }//--------------- only goes ahead if all data received & flagDepth != 0
+    depthRefresh();
+}
+/*!
+ * \brief control time between sended depth images (refresco)
+ */
+void AttendClient::depthRefresh()
+{
+    qDebug("AttendClient::depthRefresh");
+    int duration = srvK.m_ulRefrescoDepth - t_depth.elapsed();
+    qDebug("  antes de retraso %i",t_depth.elapsed());
 
-//----------------------------------------------------------------create & send depth frame as QImage
+    if( duration > 0 ){
+        qDebug("  CON retraso duracion= %i",duration);
+        QTimer::singleShot(duration,this,SLOT(depthSend()));
+        qDebug("  En retraso tiempoooo  %i",t_depth.elapsed());
+    }else{
+        qDebug("  enviamos SIN retraso %i",t_depth.elapsed());
+        depthSend();//enviamos
+        qDebug("  YA enviado %i",t_depth.elapsed());
+    }
+}
+/*!
+ * \brief send depth frame (image) through skt_depth to client
+ */
+void AttendClient::depthSend()
+{
+    //qDebug("AttendClient::sendDepth");
     QImage image = QImage(640,480,QImage::Format_Grayscale8);
     unsigned char r,g,b, distaChar;
     for(int x = 0; x < 640; x++){
@@ -308,7 +335,6 @@ void AttendClient::sendDepth()
             image.setPixel(x,y,qRgb(r,g,b));
         }
     }
-
     QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
     out.setVersion(QDataStream::Qt_5_0);
@@ -317,6 +343,7 @@ void AttendClient::sendDepth()
     out << quint64(buff.size() - sizeof(quint64));//set buff size at beginning
 //    qDebug("  tamaño antes enviado: %u",(buff.size()-sizeof(quint64))) ;//DEBUG
     skt_depth->write(buff);//enviamos
+    t_depth.restart();
 }
 
 /*!
@@ -478,7 +505,7 @@ void AttendClient::sendBarrido()
         in >> sizeBarrido;//read and save into quint64 sizeBarrido
     }
     if (skt_barrido->bytesAvailable() < sizeBarrido){//check there's enough bytes to read
-        return;//if not wait till you have all data size video says
+        return;//if not wait till you have all data sizeBarrido says
     }
 
     in >> flagBarrido;//flag = 0 will stop and disconnect, != 0 send barrido

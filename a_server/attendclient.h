@@ -36,8 +36,10 @@ private slots:
     void videoRefresh();
     void videoSend();
     //depth
-    void incomingDepth();
-    void sendDepth();
+    void depthConnection();
+    void depthIncoming();
+    void depthRefresh();
+    void depthSend();
     //3d
     void incoming3D();
     void send3D();
