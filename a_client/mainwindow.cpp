@@ -178,7 +178,7 @@ void MainWindow::requestNext(QTcpSocket *socket)
     socket->write(buff);
 }
 /*!
- * \brief utility function to request disconnect to socket (in Apikinect way)
+ * \brief utility function to request disconnect to server socket (in Apikinect way)
  * \param [in] socket to which request new info.
  */
 void MainWindow::requestStop(QTcpSocket *socket)

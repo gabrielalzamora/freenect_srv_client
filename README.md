@@ -3,6 +3,7 @@ QT server connected to kinect will send 3d data to clients
 
 in progress...
 
+26 ago 2016 - refresco (refresh image) implemented for video
 25 ago 2016 - acceleration sended to client
 25 ago 2016 - acceleration in server, check box combinations allowed
 24 ago 2016 - all served if all selected, avoid other combinations

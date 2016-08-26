@@ -8,6 +8,7 @@
  */
 
 #include <vector>
+#include <QTimer>
 #include "attendclient.h"
 
 /*!
@@ -102,7 +103,6 @@ AttendClient::~AttendClient()
         s_accel->disconnect();
     }
 }
-
 /*!
  * \brief create servers to listen client
  */
@@ -116,7 +116,7 @@ void AttendClient::startServers()
     s_accel = new QTcpServer(this);
 
     s_video->listen(QHostAddress::Any,VIDEOPORT);
-    connect(s_video,SIGNAL(newConnection()),this,SLOT(incomingVideo()));
+    connect(s_video,SIGNAL(newConnection()),this,SLOT(videoConnection()));
     s_depth->listen(QHostAddress::Any,DEPTHPORT);
     connect(s_depth,SIGNAL(newConnection()),this,SLOT(incomingDepth()));
     s_3d->listen(QHostAddress::Any,THREEPORT);
@@ -186,29 +186,21 @@ void AttendClient::readSrvKdata()
 /*!
  * \brief answer incoming connection; bind to a socket in order to I/O data
  */
-void AttendClient::incomingVideo()
+void AttendClient::videoConnection()
 {
     skt_video = s_video->nextPendingConnection();
-    connect(skt_video,SIGNAL(readyRead()),this,SLOT(sendVideo()));
+    connect(skt_video,SIGNAL(readyRead()),this,SLOT(videoRefresh()));
+    t_video.start();
 }
-/*!
- * \brief send video frame (image) through skt_video to client
- */
-void AttendClient::sendVideo()
+
+void AttendClient::videoIncoming()
 {
-    //qDebug("AttendClient::sendVideo");
-    if(skt_video->peerAddress() == peerAddr){//AttendClient only attend single client
-        qDebug("  es mi cliente :o)");
-
-    }else{///-------Al revés -> cuando acabes DEBUG  if != return (menos código, más simple)
-        qDebug("  otro cliente :o(  %u yo %u ",skt_video->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+    qDebug("AttendClient::videoIncoming");
+    if(skt_video->peerAddress() != peerAddr)
         return;//if client is not our client wait for next connection
-    }///--------------- cuando simplificado quita else{} -----------------DEBUG
-
     //-------------------------------------------------------read client msg
     QDataStream in(skt_video);//read client petition
     in.setVersion(QDataStream::Qt_5_0);
-
     if (sizeVideo == 0) {//check there's enough bytes to read
         if (skt_video->bytesAvailable() < sizeof(quint64))
             return;
@@ -217,8 +209,7 @@ void AttendClient::sendVideo()
     if (skt_video->bytesAvailable() < sizeVideo){//check there's enough bytes to read
         return;//if not wait till you have all data size video says
     }
-
-    in >> flagVideo;//flag = 0 will stop and disconnect, != 0 send image
+    in >> flagVideo;//read flag = 0 will stop and disconnect, != 0 send image
     //qDebug("tamaño: %llu  info: %u", sizeVideo, flagVideo);//DEBUG
     sizeVideo = 0;//to allow reading next message size
 
@@ -227,8 +218,31 @@ void AttendClient::sendVideo()
         //qDebug("Cliente ordena desconectar VIDEO");
         return;
     }//--------------- only goes ahead if all data received & flagVideo != 0
+    videoRefresh();
+}
 
-//----------------------------------------------------------------create & send video frame as QImage
+void AttendClient::videoRefresh()
+{
+    qDebug("AttendClient::videoRefresh");
+    int duration = srvK.m_ulRefrescoColor - t_video.elapsed();
+    qDebug("  antes de retraso %i",t_video.elapsed());
+
+    if( duration > 0 ){
+        qDebug("  CON retraso duracion= %i",duration);
+        QTimer::singleShot(duration,this,SLOT(videoSend()));
+        qDebug("  En retraso tiempoooo  %i",t_video.elapsed());
+    }else{
+        qDebug("  enviamos SIN retraso %i",t_video.elapsed());
+        videoSend();//enviamos
+        qDebug("  YA enviado %i",t_video.elapsed());
+    }
+}
+/*!
+ * \brief send video frame (image) through skt_video to client
+ */
+void AttendClient::videoSend()
+{
+    qDebug("AttendClient::videoSend");
     QImage image = QImage(structBuffers.ptrVideoBuf->data(),640,480,QImage::Format_RGB888);
     QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
@@ -237,7 +251,8 @@ void AttendClient::sendVideo()
     out.device()->seek(0);//puntero a inicio buff
     out << quint64(buff.size() - sizeof(quint64));//set buff size at beginning
 //    qDebug("  tamaño antes enviado: %u",(buff.size()-sizeof(quint64))) ;//DEBUG
-    skt_video->write(buff);//enviamos
+    skt_video->write(buff);
+    t_video.restart();
 }
 
 /*!
@@ -319,7 +334,7 @@ void AttendClient::send3D()
 {
     //qDebug("AttendClient::send3D");
     if(skt_3d->peerAddress() != peerAddr){//AttendClient only attend single client
-        qDebug("  otro cliente :o(  %u yo %u ",skt_3d->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+        //qDebug("  otro cliente :o(  %u yo %u ",skt_3d->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
         return;//if client is not our client wait for next connection
     }
 
@@ -386,7 +401,7 @@ void AttendClient::send2D()
 {
     //qDebug("AttendClient::send2D");
     if(skt_2d->peerAddress() != peerAddr){//AttendClient only attend single client
-        qDebug("  otro cliente :o(  %u yo %u ",skt_2d->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+        //qDebug("  otro cliente :o(  %u yo %u ",skt_2d->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
         return;//if client is not our client wait for next connection
     }
 
@@ -449,7 +464,7 @@ void AttendClient::sendBarrido()
     //qDebug("AttendClient::sendBarrido");
 
     if(skt_barrido->peerAddress() != peerAddr){//AttendClient only attend single client
-        qDebug("  otro cliente :o(  %u yo %u ",skt_barrido->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+        //qDebug("  otro cliente :o(  %u yo %u ",skt_barrido->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
         return;//if client is not our client wait for next connection
     }
 
@@ -506,7 +521,7 @@ void AttendClient::sendAccel()
 {
     //qDebug("AttendClient::sendAccel");
     if(skt_accel->peerAddress() != peerAddr){//AttendClient only attend single client
-        qDebug("  otro cliente :o(  %u yo %u ",skt_accel->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
+        //qDebug("  otro cliente :o(  %u yo %u ",skt_accel->peerAddress().toIPv4Address(),peerAddr.toIPv4Address());
         return;//if client is not our client wait for next connection
     }
 

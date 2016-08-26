@@ -13,6 +13,7 @@
 #include <QObject>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QTime>
 #include "data.h"
 
 class AttendClient : public QObject
@@ -26,25 +27,27 @@ public:
 signals:
     void newSrvKinect(srvKinect newSrvK);
 
-public slots:
+private slots:
     void startServers();
     void readSrvKdata();
-
-    void incomingVideo();
-    void sendVideo();
-
+    //video
+    void videoConnection();
+    void videoIncoming();
+    void videoRefresh();
+    void videoSend();
+    //depth
     void incomingDepth();
     void sendDepth();
-
+    //3d
     void incoming3D();
     void send3D();
-
+    //2d
     void incoming2D();
     void send2D();
-
+    //barrido
     void incomingBarrido();
     void sendBarrido();
-
+    //accel
     void incomingAccel();
     void sendAccel();
 
@@ -55,36 +58,38 @@ private:
     QHostAddress peerAddr;
     quint16 peerPort;
     pBuf structBuffers;
-
     srvKinect srvK;
 
+    QTime t_video, t_depth;//!< to control refresh (refresco)
+    QTime t_3d, t_2d;
+    QTime t_barrido, t_accel;
+
+    //video
     QTcpServer *s_video;
     QTcpSocket *skt_video;
     quint64 sizeVideo;
     quint8 flagVideo;
-    //QImage imgVideo;
-    //std::vector<uint8_t> m_vectorVideo;
-
+    //depth
     QTcpServer *s_depth;
     QTcpSocket *skt_depth;
     quint64 sizeDepth;
     quint8 flagDepth;
-
+    //3d
     QTcpServer *s_3d;
     QTcpSocket *skt_3d;
     quint64 size3d;
     quint8 flag3d;
-
+    //2d
     QTcpServer *s_2d;
     QTcpSocket *skt_2d;
     quint64 size2d;
     quint8 flag2d;
-
+    //barrido
     QTcpServer *s_barrido;
     QTcpSocket *skt_barrido;
     quint64 sizeBarrido;
     quint8 flagBarrido;
-
+    //acceleration
     QTcpServer *s_accel;
     QTcpSocket *skt_accel;
     quint64 sizeAccel;
