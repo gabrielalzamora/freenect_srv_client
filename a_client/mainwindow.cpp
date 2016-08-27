@@ -416,7 +416,7 @@ void MainWindow::readDataDepth()
  */
 void MainWindow::init3D()
 {
-    qDebug("MainClient::init3D");
+    //qDebug("MainClient::init3D");
     if( connected3D ){//second click disconnects
         finalize3D();
         ui->textBrowser->append("- 3D closed ");
@@ -450,7 +450,7 @@ void MainWindow::init3D()
  */
 void MainWindow::finalize3D()
 {
-    qDebug("MainClient::finalize3D");
+    //qDebug("MainClient::finalize3D");
     //---------------------------request STOP server
     /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
@@ -470,7 +470,7 @@ void MainWindow::finalize3D()
  */
 void MainWindow::readData3D()
 {
-    qDebug("MainClient::readData3D");
+    //qDebug("MainClient::readData3D");
     QDataStream ioStream(skt_3D);
     ioStream.setVersion(QDataStream::Qt_5_0);
     p3Buf.resize(0);//still has memory allocated (reserved), but size = 0
@@ -480,7 +480,7 @@ void MainWindow::readData3D()
         if(skt_3D->bytesAvailable() < (int)sizeof(quint64))
             return;//size3D info completed-----or-------return
         ioStream >> size3D;
-        qDebug("  tamaño recibido %llu",size3D);
+        //qDebug("  tamaño recibido %llu",size3D);
     }
     if(skt_3D->bytesAvailable() < (size3D-sizeof(quint64)))
         return;//wait till all 3D data received
@@ -496,7 +496,7 @@ void MainWindow::readData3D()
         ioStream >> aux3.color.rgbReserved;
         p3Buf.push_back(aux3);//store in p3Buf (3D vector)
     }
-qDebug("  tamaño vector %lu",p3Buf.size());
+    //qDebug("  tamaño vector %lu",p3Buf.size());
     ui->glWidget->setCloud(p3Buf);
     ui->glWidget->repaint();
 
@@ -520,7 +520,7 @@ qDebug("  tamaño vector %lu",p3Buf.size());
  */
 void MainWindow::init2D()
 {
-    qDebug("MainClient::init2D");
+    //qDebug("MainClient::init2D");
     if( connected2D ){//second click disconnects
         finalize2D();
         ui->textBrowser->append("- 2D closed ");
@@ -554,7 +554,7 @@ void MainWindow::init2D()
  */
 void MainWindow::finalize2D()
 {
-    qDebug("MainClient::finalize2D");
+    //qDebug("MainClient::finalize2D");
     //---------------------------request STOP server
     /*QByteArray buff;
     QDataStream out(&buff, QIODevice::WriteOnly);
@@ -584,7 +584,7 @@ void MainWindow::readData2D()
         if(skt_2D->bytesAvailable() < (int)sizeof(quint64))
             return;//size2D info completed-----or-------return
         ioStream >> size2D;
-        qDebug("  tamaño recibido %llu",size2D);
+        //qDebug("  tamaño recibido %llu",size2D);
     }
     if(skt_2D->bytesAvailable() < (size2D-sizeof(quint64)))
         return;//wait till all 2D data received
@@ -699,7 +699,7 @@ void MainWindow::readDataBarrido()
         if(skt_barrido->bytesAvailable() < (int)sizeof(quint64))
             return;//wait till sizeBarrido completed-----or-------return
         in >> sizeBarrido;
-        qDebug("  barrido recibe tamaño %llu",sizeBarrido);
+        //qDebug("  barrido recibe tamaño %llu",sizeBarrido);
     }
     if(skt_barrido->bytesAvailable() < (sizeBarrido-sizeof(quint64)))
         return;//wait till all data received
@@ -781,7 +781,7 @@ void MainWindow::readDataAccel()
         if(skt_accel->bytesAvailable() < (int)sizeof(quint64))
             return;//size2D info completed-----or-------return
         ioStream >> sizeAccel;
-        qDebug("  tamaño recibido %llu",sizeAccel);
+        //qDebug("  tamaño recibido %llu",sizeAccel);
     }
     if(skt_accel->bytesAvailable() < (sizeAccel-sizeof(quint64)))
         return;//wait till all 2D data received

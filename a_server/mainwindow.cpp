@@ -63,7 +63,6 @@ MainWindow::~MainWindow()
         stoploop();
         stopK(currentDeviceIndex);
     }
-    freenect.~Freenect();
     delete sceneVideo;
     delete sceneDepth;
     delete sceneBarre;
@@ -340,75 +339,94 @@ void MainWindow::loop()
         timeVector[e_barrido]=0;
         timeVector[e_accel]=0;
 
-        t.start();//---------------------------------------------time.start
-        device->getRGB(videoBuf);
-        timeVector[e_video]=t.elapsed();//---------------------timeVector[e_video]
         if( ui->tab_2->m_srvK.m_bEnvioColor ){
-            videoDataReady();//paint video on gvVideo
+            t.start();//---------------------------------------------time.start
+            device->getRGB(videoBuf);
+            timeVector[e_video]=t.elapsed();//---------------------timeVector[e_video]
+            if(ui->cb_video->isChecked())
+                videoDataReady();//paint video on gvVideo
         }
 
-        t.start();//---------------------------------------------time.start
-        device->getDepth(depthBuf);
-        timeVector[e_depth]=t.elapsed();//---------------------timeVector[e_depth]
         if( ui->tab_2->m_srvK.m_bEnvioDepth )
-            depthDataReady();//paint depth on gvDepth
+            t.start();//---------------------------------------------time.start
+            device->getDepth(depthBuf);
+            timeVector[e_depth]=t.elapsed();//---------------------timeVector[e_depth]
+            if(ui->cb_depth->isChecked())
+                depthDataReady();//paint depth on gvDepth
 
 //        qApp->processEvents();//stay responsive to button click
 
         if( ui->tab_2->m_srvK.m_bEnvio2D && ui->tab_2->m_srvK.m_bEnvio3D && ui->tab_2->m_srvK.m_bEnvioBarrido){//all buffers
             //qDebug("  2D+3D+Barrido");
             t.start();//---------------------------------------------time.start
-            device->getAll(&structBuffers,&ui->tab_2->m_srvK);
+            device->getAll(&structBuffers,&ui->tab_2->m_srvK);//---get all points 3d, 2d & barrido
             timeVector[e_3] = t.elapsed();//---------------------timeVector[e_3]
-            ui->glWidget->setCloud(p2Buf);//send FrameGL new point cloud
-            ui->glWidget->setCloud(p3Buf);
-            ui->glWidget->repaint();//paint points clouds on glwidget
-            barridoDataReady();//paint Barrido (swept)
+            if(ui->cb_2->isChecked())
+                ui->glWidget->setCloud(p2Buf);//send new point cloud to FrameGL
+            if(ui->cb_3->isChecked())
+                ui->glWidget->setCloud(p3Buf);
+            if(ui->cb_2->isChecked() || ui->cb_3->isChecked())
+                ui->glWidget->repaint();//paint points clouds on oglwidget through FrameGL
+            if(ui->cb_barrido->isChecked())
+                barridoDataReady();//paint Barrido (swept)
         }else if(!(ui->tab_2->m_srvK.m_bEnvio2D) && ui->tab_2->m_srvK.m_bEnvio3D && ui->tab_2->m_srvK.m_bEnvioBarrido){
             //qDebug("  3D+Barrido");
             t.start();//---------------------------------------------time.start
             device->get3dBarrido(&structBuffers,&ui->tab_2->m_srvK);
             timeVector[e_3] = t.elapsed();//---------------------timeVector[e_3]
-            ui->glWidget->setCloud(p3Buf);//send FrameGL new point cloud
-            ui->glWidget->repaint();//paint points cloud on glwidget
-            barridoDataReady();//paint Barrido (swept)
-
+            if(ui->cb_3->isChecked()){
+                ui->glWidget->setCloud(p3Buf);//send FrameGL new point cloud
+                ui->glWidget->repaint();//paint points cloud on oglwidget through FrameGL
+            }
+            if(ui->cb_barrido->isChecked())
+                barridoDataReady();//paint Barrido (swept)
         }else if(ui->tab_2->m_srvK.m_bEnvio2D && !(ui->tab_2->m_srvK.m_bEnvio3D) && ui->tab_2->m_srvK.m_bEnvioBarrido){
             //qDebug("  2D+Barrido");
             t.start();//---------------------------------------------time.start
             device->get2dBarrido(&structBuffers,&ui->tab_2->m_srvK);
             timeVector[e_2] = t.elapsed();//---------------------timeVector[e_2]
-            ui->glWidget->setCloud(p2Buf);//send FrameGL new point cloud
-            ui->glWidget->repaint();//paint points cloud on glwidget
-            barridoDataReady();//paint Barrido (swept)
+            if(ui->cb_2->isChecked()){
+                ui->glWidget->setCloud(p2Buf);
+                ui->glWidget->repaint();//paint points clouds on oglwidget through FrameGL
+            }
+            if(ui->cb_barrido->isChecked())
+                barridoDataReady();//paint Barrido (swept)
         }else if(ui->tab_2->m_srvK.m_bEnvio2D && ui->tab_2->m_srvK.m_bEnvio3D && !(ui->tab_2->m_srvK.m_bEnvioBarrido)){
             //qDebug("  2D+3D");
             t.start();//---------------------------------------------time.start
             device->get2and3(&structBuffers,&ui->tab_2->m_srvK);
             timeVector[e_3] = t.elapsed();//---------------------timeVector[e_3]
-            ui->glWidget->setCloud(p2Buf);//send FrameGL new point cloud
-            ui->glWidget->setCloud(p3Buf);//send FrameGL new point cloud
-            ui->glWidget->repaint();//paint points cloud on glwidget
+            if(ui->cb_2->isChecked())
+                ui->glWidget->setCloud(p2Buf);//send new point cloud to FrameGL
+            if(ui->cb_3->isChecked())
+                ui->glWidget->setCloud(p3Buf);
+            if(ui->cb_2->isChecked() || ui->cb_3->isChecked())
+                ui->glWidget->repaint();//paint points clouds on oglwidget through FrameGL
         }else if(ui->tab_2->m_srvK.m_bEnvio3D){
             //qDebug("  3D");
             t.start();//---------------------------------------------time.start
             device->get3d(&structBuffers,&ui->tab_2->m_srvK);
             timeVector[e_3] = t.elapsed();//---------------------timeVector[e_3]
-            ui->glWidget->setCloud(p3Buf);//send FrameGL new point cloud
-            ui->glWidget->repaint();//paint points cloud on glwidget
+            if(ui->cb_3->isChecked()){
+                ui->glWidget->setCloud(p3Buf);//send FrameGL new point cloud
+                ui->glWidget->repaint();//paint points cloud on oglwidget through FrameGL
+            }
         }else if(ui->tab_2->m_srvK.m_bEnvio2D){
             //qDebug("  2D");
             t.start();//---------------------------------------------time.start
             device->get2(&structBuffers,&ui->tab_2->m_srvK);
-            timeVector[e_2] = t.elapsed();//---------------------timeVector[e_3]
-            ui->glWidget->setCloud(p2Buf);//send FrameGL new point cloud
-            ui->glWidget->repaint();//paint points cloud on glwidget
+            timeVector[e_2] = t.elapsed();//---------------------timeVector[e_2]
+            if(ui->cb_2->isChecked()){
+                ui->glWidget->setCloud(p2Buf);
+                ui->glWidget->repaint();//paint points clouds on oglwidget through FrameGL
+            }
         }else if(ui->tab_2->m_srvK.m_bEnvioBarrido){
             //qDebug("  Barrido");
             t.start();//---------------------------------------------time.start
             device->getBarrido(&structBuffers,&ui->tab_2->m_srvK);
             timeVector[e_barrido] = t.elapsed();//---------------------timeVector[e_barrido]
-            barridoDataReady();//paint Barrido (swept)
+            if(ui->cb_barrido->isChecked())
+                barridoDataReady();//paint Barrido (swept)
         }
         device->getAccel(a);
         printTimeVector(timeVector);
@@ -449,7 +467,7 @@ void MainWindow::printTimeVector(std::vector<int> &timeV)
     str.append(aux);
     aux.setNum(timeV[e_barrido]);
     str.append(aux);
-    //pinta las aceleraciones----------------------
+    //pinta las aceleraciones----------------------accel
     aux = "\n  accel X = ";
     str.append(aux);
     aux.setNum(a.accel_x);
@@ -522,7 +540,6 @@ void MainWindow::startServer()
         mainServer->close();
         return;
     }
-
     connect(mainServer, SIGNAL(newConnection()), this, SLOT(attendNewClient()));
 }
 /*!
@@ -530,7 +547,7 @@ void MainWindow::startServer()
  */
 void MainWindow::attendNewClient()///------test with concurrent clients----------DEBUG
 {
-    qDebug("MainWindow::startServer");
+    qDebug("MainWindow::attendNewClient");
     attendant = new AttendClient(mainServer->nextPendingConnection(),&structBuffers,this);
     if( attendant == NULL ) ui->textEdit->setText("BAD_ALLOC  AttendClient");
     attendClients.push_back(attendant);
@@ -545,6 +562,6 @@ void MainWindow::attendNewClient()///------test with concurrent clients---------
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     qDebug("MainWindow::closeEvent()");
-
+    //this->~MainWindow();//no es aquí, mira QTcpServer o sockets, peta si cierras tras conectar
     //exit(0);
 }
