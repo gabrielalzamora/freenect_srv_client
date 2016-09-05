@@ -151,13 +151,11 @@ void Apikinect::getAll(pBuf *structBuffers, srvKinect *aSrvKinect)
         // Z into screen, Y downwards, X to right as OpenGL
         // Z = depth*cos(angleKinect)-y*sin(angleKinect)  if angleKinect around x axis
         p3.z = m_buffer_depth[i]*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0);
-
         //within z limits
         if( (p3.z != 0) && (p3.z <= aSrvKinect->m_fZMax) ){
             // Y = (y - cy) * d / fy but remember angleKinect plus camera high
             // Y = y*cos(angleKinect)+depth*sin(angleKinect)-CameraHigh if angleKinect around Ox axis
             p3.y = ((i/640-(480-1)/2.f)*m_buffer_depth[i]/f)*cos(aSrvKinect->m_iAnguloKinect*M_PI/180.0) + m_buffer_depth[i]*sin(aSrvKinect->m_iAnguloKinect*M_PI/180.0) - aSrvKinect->m_fAltura*1000;
-
             //within y limits
             if( (p3.y >= (-1)*aSrvKinect->m_fYMax) && (p3.y <= (-1)*aSrvKinect->m_fYMin) ){//within y limits (remember Y downwards)
                 p2.z = p3.z;

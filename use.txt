@@ -10,7 +10,7 @@ Start
 4-If no kinect detected restart
 5-Click on combo where detected kinects are numbered
 6-Click again to select kinect index (Go button should be activated)
-7-Click 'Go' and if nothing is shown Stop and push 'Go' again
+7-Click 'Go' and if nothing is shown Stop(steps 8,9,10) and go to step 5 'Go' again
 
 Stop
 8-Click on combo where detected kinects are numbered
